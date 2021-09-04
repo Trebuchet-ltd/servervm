@@ -23,14 +23,14 @@ class VmViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch']
 
     def perform_create(self, serializer):
-        name = self.request.name
+        name = self.request.data["name"]
         command = f"virt-clone --original ubuntu2004 --name {name} --file /var/kvm/images/{name}.img"
         os.system(command)
-        ram = self.request.memory
+        ram = self.request.data["memory"]
         conn = libvirt.open("qemu:///system")
         dom = conn.lookupByName(name)
-        dom.setMaxMemory(int(ram) * 1024 * 1024)
-        dom.setMemory(int(ram) * 1024 * 1024)
+        # dom.setMaxMemory(int(ram) * 1024 * 1024)
+        # dom.setMemory(int(ram) * 1024 * 1024)
         conn.close()
         mac_address = re.search(r"<mac address='([A-Za-z0-9:]+)'", dom.XMLDesc(0)).groups()
         serializer.save(user= self.request.user, mac_address=mac_address)
