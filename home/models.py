@@ -11,6 +11,9 @@ class VirtualMachine(models.Model):
     mac_address = models.CharField(max_length=50, blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     os = models.CharField(max_length=30)
+    vpn_ip = models.GenericIPAddressField(blank=True, null=True)
+    virtual_mac = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return self.name
+
