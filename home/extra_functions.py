@@ -12,11 +12,15 @@ def create_vm(instance):
     conn = libvirt.open("qemu:///system")
     dom = conn.lookupByName(instance.name)
     ram = instance.memory
-
-    if ram != 4:
-        dom.setMaxMemory(int(ram) * 1024 * 1024)
-        dom.setMemory(int(ram) * 1024 * 1024)
+    dom.setMaxMemory(int(ram) * 1024 * 1024)
+    os.system(f"virsh setvcpus {instance.name} {instance.vcpus} --config --maximum")
+    os.system(f"virsh setvcpus {instance.name} {instance.vcpus} --config ")
     os.system(f"virsh start {instance.name}")
+    time.sleep(5)
+
+    dom.setMemory(int(ram) * 1024 * 1024)
+    os.system(f"virsh setvcpus --count {instance.vcpus} {instance.name} ")
+
     conn.close()
     mac_address = re.search(r"<mac address='([A-Za-z0-9:]+)'", dom.XMLDesc(0)).groups()[0]
     instance.mac_address = mac_address
@@ -38,3 +42,20 @@ def delete_vm(instance):
         print(e)
     instance.delete()
 
+
+def update_vm(instance):
+    conn = libvirt.open("qemu:///system")
+    dom = conn.lookupByName(instance.name)
+    dom.shutdown()
+    time.sleep(10)
+    ram = instance.memory
+    dom.setMaxMemory(int(ram) * 1024 * 1024)
+    os.system(f"virsh setvcpus {instance.name} {instance.vcpus} --config --maximum")
+    os.system(f"virsh setvcpus {instance.name} {instance.vcpus} --config ")
+    os.system(f"virsh start {instance.name}")
+    time.sleep(5)
+
+    dom.setMemory(int(ram) * 1024 * 1024)
+    os.system(f"virsh setvcpus --count {instance.vcpus} {instance.name} ")
+
+    conn.close()
