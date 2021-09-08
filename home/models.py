@@ -27,3 +27,7 @@ class VirtualMachine(models.Model):
         return self.name
 
 
+class Storage(models.Model):
+    size = models.IntegerField()
+    file_path = models.CharField(max_length=50)
+    vm = models.ForeignKey(VirtualMachine, on_delete=models.CASCADE, related_name="size")

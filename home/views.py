@@ -36,8 +36,10 @@ class VmViewSet(viewsets.ModelViewSet):
         threading.Thread(target=delete_vm, args=(instance,)).start()
 
     def perform_update(self, serializer):
+        print(serializer)
         instance = serializer.save(user=self.request.user)
-        threading.Thread(target=update_vm, args=(instance,)).start()
+        # print(f"{instance}")
+        # threading.Thread(target=update_vm, args=(instance,)).start()
 
     @action(methods=['post'], detail=False)
     def update_ip(self, request):
