@@ -1,4 +1,9 @@
 /venv
+
+./idea
+.env
+
+
+./home/server_setup
 /home/template_changes.txt
 
-.env
