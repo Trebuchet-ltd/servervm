@@ -1,10 +1,6 @@
-import os
-import subprocess
 
 from django.http import FileResponse
-from django.shortcuts import render
 from rest_framework.decorators import action
-from rest_framework.views import APIView
 
 from .serializers import VirtualMachineSerializer,PemFileSerializer
 from .models import VirtualMachine,PemFile
@@ -36,22 +32,21 @@ class VmViewSet(viewsets.ModelViewSet):
         threading.Thread(target=delete_vm, args=(instance,)).start()
 
     def perform_update(self, serializer):
-        print(serializer)
+        print(serializer.validated_data)
         instance = serializer.save(user=self.request.user)
         # print(f"{instance}")
         # threading.Thread(target=update_vm, args=(instance,)).start()
 
     @action(methods=['post'], detail=False)
     def update_ip(self, request):
-        mac_address = request.POST["mac_address"]
+        mac_address = request.data["mac_address"]
         vm = VirtualMachine.objects.get(mac_address=mac_address)
-        vm.ip_address = request.POST["ip_address"]
+        vm.ip_address = request.data["ip_address"]
         vm.save()
         os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/{vm.name} <<y")
         time.sleep(10)
         os.system(f"sshpass -p '12345678' ssh-copy-id -f -i {vm.pem_file.file_path}.pub -o StrictHostKeyChecking=no test@{vm.ip_address} ")
         os.system(f"sshpass -p '12345678' ssh test@{vm.ip_address} bash /var/local/remove_password.sh > err.html ")
-
         return Response(status=201)
 
     @action(methods=['post'], detail=False)
@@ -86,7 +81,6 @@ class PemFileViewSet(viewsets.ModelViewSet):
     def download_file(self, request, pk):
         pem_file = PemFile.objects.get(pk=pk)
         pem = open(pem_file.file_path, 'rb')
-
         response = FileResponse(pem)
         os.remove(pem_file.file_path)
         return response
