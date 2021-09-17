@@ -7,6 +7,10 @@ from .models import Storage
 import math
 
 
+def show_domains():
+    os.system("virsh list --all")
+
+
 def set_storage(instance):
     """
     --->  This function first create a img file with new file size
@@ -34,31 +38,38 @@ def set_storage(instance):
     os.system(f"sudo mv /var/kvm/images/{instance.code}-new.qcow2 /var/kvm/images/{instance.code}.qcow2")
 
 
-def set_memory(instance, dom, vcpu=True):
+def set_memory(instance, dom):
     """
     --->  This function first change the max memory
     --->  Then change the permission to qmeu:kvm
     --->  then expand the vm disk with new image
     --->  then remove old img and rename new image to old name
-
     :param instance: the instance of model VirtualMachine
     :param dom:
-    :param vcpu:
     :return:
     """
 
     ram = int(math.fabs(instance.memory))
     vcpus = int(math.fabs(instance.vcpus))
-
+    print("setting memory")
     dom.setMaxMemory(int(ram) * 1024 * 1024)
+    dom.create()
+    time.sleep(10)
+    show_domains()
+    dom.setMemory(int(ram) * 1024 * 1024)
     if vcpus:
         os.system(f"virsh setvcpus {instance.code} {vcpus} --config --maximum")
         os.system(f"virsh setvcpus {instance.code} {vcpus} --config ")
     os.system(f"virsh start {instance.code}")
     if vcpus:
         os.system(f"virsh setvcpus --count {vcpus} {instance.code} ")
-    time.sleep(5)
-    dom.setMemory(int(ram) * 1024 * 1024)
+
+    show_domains()
+    print("domain started")
+    print("setting memory")
+
+    print("memory set")
+    show_domains()
 
 
 def create_vm(instance):
@@ -74,7 +85,8 @@ def create_vm(instance):
     conn = libvirt.open("qemu:///system")
     dom = conn.lookupByName(instance.code)
 
-    if instance.storage != 20:
+    if instance.storage > 20:
+        print("sending req to set storage")
         set_storage(instance)
 
     set_memory(instance, dom)
@@ -86,6 +98,7 @@ def create_vm(instance):
 
 
 def delete_vm(instance):
+    print("deleting vm")
     # os.system(f"rm /home/ubuntu/servervm/media/{instance.user}/{instance.code}")
     # os.system(f"rm /home/ubuntu/servervm/media/{instance.user}/{instance.code}.pub")
     conn = libvirt.open("qemu:///system")
@@ -100,14 +113,31 @@ def delete_vm(instance):
     instance.delete()
 
 
-def update_vm(instance):
-    conn = libvirt.open("qemu:///system")
-    dom = conn.lookupByName(instance.code)
+def update_vm(instance, memory, storage):
+    print("updating vm")
+    try:
+        conn = libvirt.open("qemu:///system")
+        dom = conn.lookupByName(instance.code)
+        if dom.isActive():
+            dom.shutdown()
+            time.sleep(20)
+            os.system("virsh list --all")
 
-    os.system(f"virsh shutdown {instance.code}")
-    time.sleep(20)
-    print("shut down completed")
-    set_storage(instance)
-    set_memory(instance, dom)
-    conn.close()
+        if storage < instance.storage:
+            print("updating storage")
+            set_storage(instance)
+        else:
+            print("not updating storage")
+            instance.storage = storage
+            instance.save()
 
+        if memory != instance.memory:
+            print("updating vm memory")
+            # set_memory(instance, dom)
+        if not dom.isActive():
+            print("this worked")
+            dom.create()
+            os.system("virsh list --all")
+        conn.close()
+    except Exception as e:
+        print(e)

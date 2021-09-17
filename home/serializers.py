@@ -9,11 +9,11 @@ class PemFileSerializer(serializers.ModelSerializer):
         fields = ["id", 'name',"user", "created_date", "file_path"]
         extra_kwargs = {
             'user': {'read_only': True},
+            "file_path": {'read_only': True},
         }
 
 
 class VirtualMachineSerializer(serializers.ModelSerializer):
-
 
     class Meta:
         model = VirtualMachine

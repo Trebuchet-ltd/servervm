@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 
 from .serializers import VirtualMachineSerializer, PemFileSerializer
 from .models import VirtualMachine, PemFile
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .extra_functions import *
 import threading
@@ -24,10 +24,14 @@ class VmViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         threading.Thread(target=delete_vm, args=(instance,)).start()
 
-    def perform_update(self, serializer):
-        print(serializer.validated_data)
-        instance = serializer.save(user=self.request.user)
-        threading.Thread(target=update_vm, args=(instance,)).start()
+    def update(self, request, *args, **kwargs):
+        current_data = VirtualMachine.objects.get(id=self.request.data["id"])
+        memory = current_data.memory
+        storage = current_data.storage
+        new_storage = self.request.data["storage"]
+        print(f"{new_storage} ")
+        threading.Thread(target=update_vm, args=(current_data,memory, storage)).start()
+        return super().update(self.request, *args, **kwargs)
 
     @action(methods=['post'], detail=False)
     def update_ip(self, request):
@@ -37,9 +41,11 @@ class VmViewSet(viewsets.ModelViewSet):
         if not vm.ip_address:
             vm.ip_address = request.data["ip_address"]
             vm.save()
-            os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/{vm.name} <<y")
+            os.system(f'ssh-keygen -f "/home/ubuntu/.ssh/known_hosts" -R "{vm.ip_address}"')
+            os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/{vm.code} <<y")
             time.sleep(10)
             os.system(f"sshpass -p '{settings.vm_template_password}' ssh-copy-id -f -i {vm.pem_file.file_path}.pub -o StrictHostKeyChecking=no user@{vm.ip_address} ")
+            print("one")
             os.system(f"sshpass -p '{settings.vm_template_password}' ssh -o StrictHostKeyChecking=no user@{vm.ip_address} bash /var/local/setup.sh > err.html ")
         return Response(status=201)
 
@@ -53,6 +59,10 @@ class VmViewSet(viewsets.ModelViewSet):
             vm.save()
         return Response(status=201)
 
+    # @action(methods=("get",), detail=False)
+    # def shutdown(self, request):
+    #     print(request.data)
+
 
 class PemFileViewSet(viewsets.ModelViewSet):
 
@@ -62,14 +72,14 @@ class PemFileViewSet(viewsets.ModelViewSet):
 
     serializer_class = PemFileSerializer
     queryset = PemFile.objects.all()
-    http_method_names = ["get", "post", "delete" ]
+    http_method_names = ["get", "post", "delete"]
 
     def perform_create(self, serializer):
         name = self.request.data['name']
         os.makedirs(f"/home/ubuntu/servervm/media/{self.request.user}", exist_ok=True)
         instance = serializer.save(user=self.request.user,
                                    file_path=f"/home/ubuntu/servervm/media/{self.request.user}/{name}")
-        os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/servervm/media/{self.request.user.id}/{instance.id} <<y")
+        os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/servervm/media/{self.request.user}/{name}<<y")
 
     @action(methods=["get"], detail=True)
     def download_file(self, request, pk):
