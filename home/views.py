@@ -30,12 +30,14 @@ class VmViewSet(viewsets.ModelViewSet):
         memory = current_data.memory
         storage = current_data.storage
         new_storage = self.request.data["storage"]
-        print(f"{new_storage} ")
-        threading.Thread(target=update_vm, args=(current_data,memory, storage)).start()
-        return super().update(self.request, *args, **kwargs)
+        print(f"{memory = }, {new_storage = } {storage = }")
+        res = super().update(self.request, *args, **kwargs)
+        current_data = VirtualMachine.objects.get(id=self.request.data["id"])
+        threading.Thread(target=update_vm, args=(current_data, memory, storage)).start()
+        return res
 
-    @action(methods=['get'], detail=True)
-    def start(self, request,pk):
+    @action(methods=['post'], detail=True)
+    def start(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
         conn = libvirt.open("qemu:///system")
         try:
@@ -48,7 +50,7 @@ class VmViewSet(viewsets.ModelViewSet):
             print(e)
         return Response("vm started")
 
-    @action(methods=['get'], detail=True)
+    @action(methods=['post'], detail=True)
     def stop(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
         conn = libvirt.open("qemu:///system")
@@ -63,7 +65,7 @@ class VmViewSet(viewsets.ModelViewSet):
             print(e)
         return Response("vm shutdown")
 
-    @action(methods=['get'], detail=True)
+    @action(methods=['post'], detail=True)
     def restart(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
         conn = libvirt.open("qemu:///system")
@@ -117,15 +119,21 @@ class PemFileViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         name = self.request.data['name']
         os.makedirs(f"/home/ubuntu/servervm/media/{self.request.user}", exist_ok=True)
-        instance = serializer.save(user=self.request.user,
-                                   file_path=f"/home/ubuntu/servervm/media/{self.request.user}/{name}")
-        os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/servervm/media/{self.request.user}/{name}<<y")
+        instance = serializer.save(user=self.request.user)
+        instance.file_path = f"/home/ubuntu/servervm/media/{self.request.user}/{instance.code}"
+        instance.save()
+        os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/servervm/media/{self.request.user}/{instance.code}<<y")
 
     @action(methods=["get"], detail=True)
     def download_file(self, request, pk):
         pem_file = PemFile.objects.get(pk=pk)
-        pem = open(pem_file.file_path, 'rb')
-        response = FileResponse(pem, filename=pem_file.name)
-        os.remove(pem_file.file_path)
-        return response
+        if not pem_file.downloaded:
+            pem = open(pem_file.file_path, 'rb')
+            print(pem)
+            response = FileResponse(pem, filename=pem_file.name)
+            os.remove(pem_file.file_path)
+            pem_file.downloaded = 1
+            pem_file.save()
+            return response
+        return Response({"error": "you have already downloaded this file"})
 

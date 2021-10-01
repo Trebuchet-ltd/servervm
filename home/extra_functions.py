@@ -37,8 +37,10 @@ def set_storage(instance):
     os.system(f"sudo rm /var/kvm/images/{instance.code}.qcow2")
     os.system(f"sudo mv /var/kvm/images/{instance.code}-new.qcow2 /var/kvm/images/{instance.code}.qcow2")
 
+# def set_vcpus(vcpu,dom):
 
-def set_memory(instance, dom):
+
+def set_memory_vcpu(instance, dom, memory=True):
     """
     --->  This function first change the max memory
     --->  Then change the permission to qmeu:kvm
@@ -46,30 +48,35 @@ def set_memory(instance, dom):
     --->  then remove old img and rename new image to old name
     :param instance: the instance of model VirtualMachine
     :param dom:
+    :param memory:
     :return:
     """
 
     ram = int(math.fabs(instance.memory))
     vcpus = int(math.fabs(instance.vcpus))
     print("setting memory")
-    dom.setMaxMemory(int(ram) * 1024 * 1024)
-    dom.create()
-    time.sleep(10)
-    show_domains()
-    dom.setMemory(int(ram) * 1024 * 1024)
+    if memory:
+        dom.setMaxMemory(int(ram) * 1024 * 1024)
     if vcpus:
+        print(f"setting vcpus {vcpus} active status {dom.isActive()}")
         os.system(f"virsh setvcpus {instance.code} {vcpus} --config --maximum")
         os.system(f"virsh setvcpus {instance.code} {vcpus} --config ")
-    os.system(f"virsh start {instance.code}")
+
+    dom.create()
+    time.sleep(10)
+    if memory:
+        dom.setMemory(int(ram) * 1024 * 1024)
+    # os.system(f"virsh shutdown {instance.code}")
+
+    # os.system(f"virsh start {instance.code}")
     if vcpus:
+        print(f"setting vcpus {vcpus}")
         os.system(f"virsh setvcpus --count {vcpus} {instance.code} ")
 
-    show_domains()
     print("domain started")
     print("setting memory")
 
     print("memory set")
-    show_domains()
 
 
 def create_vm(instance):
@@ -89,9 +96,10 @@ def create_vm(instance):
         print("sending req to set storage")
         set_storage(instance)
 
-    set_memory(instance, dom)
+    set_memory_vcpu(instance, dom)
     conn.close()
     mac_address = re.search(r"<mac address='([A-Za-z0-9:]+)'", dom.XMLDesc(0)).groups()[0]
+    print(f"mac address is {mac_address}")
     instance.mac_address = mac_address
     Storage.objects.create(vm=instance, size=20, file_path=f"/var/kvm/images/{instance.code}.img")
     instance.save()
@@ -121,7 +129,7 @@ def update_vm(instance, memory, storage):
         if dom.isActive():
             dom.shutdown()
             time.sleep(20)
-            os.system("virsh list --all")
+            show_domains()
 
         if storage < instance.storage:
             print("updating storage")
@@ -130,10 +138,15 @@ def update_vm(instance, memory, storage):
             print("not updating storage")
             instance.storage = storage
             instance.save()
+        print(f'{instance.memory = }')
 
         if memory != instance.memory:
             print("updating vm memory")
-            # set_memory(instance, dom)
+            set_memory_vcpu(instance, dom)
+        else:
+            print("updating vcpu only")
+            set_memory_vcpu(instance, dom, memory=False)
+
         if not dom.isActive():
             print("this worked")
             dom.create()

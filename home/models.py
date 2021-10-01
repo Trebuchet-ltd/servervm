@@ -6,11 +6,23 @@ import random
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 
+def create_new_pem_name():
+    not_unique = True
+    unique_code = code_generator()
+    while not_unique:
+        unique_code = code_generator()
+        if not PemFile.objects.filter(code=unique_code):
+            not_unique = False
+    return str(unique_code)
+
+
 class PemFile(models.Model):
     name = models.CharField(max_length=25)
+    code = models.CharField(max_length=15, default=create_new_pem_name, blank=True, null=True)
     user = models.ForeignKey(User, related_name="pemfile", on_delete=models.CASCADE)
-    file_path = models.TextField()
+    file_path = models.TextField(blank=True,null=True)
     created_date = models.DateField(auto_now_add=True)
+    downloaded = models.BooleanField(default=0)
 
     def __str__(self):
         return f"{self.user} {self.name}"

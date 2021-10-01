@@ -79,9 +79,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'servervm.wsgi.application'
-# CELERY_RESULT_BACKEND = "redis"
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
-CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/1"
+CELERY_RESULT_BACKEND = 'django-db'
+# CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+# CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/1"
 
 CELERY_BEAT_SCHEDULE = {
       'add-every-10-seconds': {
