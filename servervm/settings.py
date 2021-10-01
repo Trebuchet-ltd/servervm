@@ -31,11 +31,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CELERY_TIMEZONE = "UTC"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
 
 # Application definition
 
 INSTALLED_APPS = [
-
+    'django_celery_results',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -76,7 +79,20 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'servervm.wsgi.application'
+# CELERY_RESULT_BACKEND = "redis"
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/1"
 
+CELERY_BEAT_SCHEDULE = {
+      'add-every-10-seconds': {
+        'task': 'myapp.tasks.add',
+        'schedule': 10.0,
+        'args': (16, 16),
+        'options': {
+            'expires': 15.0,
+        },
+        },
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases

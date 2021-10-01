@@ -1,3 +1,4 @@
+import os
 
 from django.http import FileResponse
 from rest_framework.decorators import action
@@ -33,6 +34,49 @@ class VmViewSet(viewsets.ModelViewSet):
         threading.Thread(target=update_vm, args=(current_data,memory, storage)).start()
         return super().update(self.request, *args, **kwargs)
 
+    @action(methods=['get'], detail=True)
+    def start(self, request,pk):
+        vm = VirtualMachine.objects.get(pk=pk)
+        conn = libvirt.open("qemu:///system")
+        try:
+            dom = conn.lookupByName(vm.code)
+            if not dom.isActive():
+                dom.create()
+            else:
+                return Response("vm already active")
+        except Exception as e:
+            print(e)
+        return Response("vm started")
+
+    @action(methods=['get'], detail=True)
+    def stop(self, request, pk):
+        vm = VirtualMachine.objects.get(pk=pk)
+        conn = libvirt.open("qemu:///system")
+        try:
+            dom = conn.lookupByName(vm.code)
+            try:
+                dom.shutdown()
+            except Exception as e:
+                print(e)
+                return Response("vm already off")
+        except Exception as e:
+            print(e)
+        return Response("vm shutdown")
+
+    @action(methods=['get'], detail=True)
+    def restart(self, request, pk):
+        vm = VirtualMachine.objects.get(pk=pk)
+        conn = libvirt.open("qemu:///system")
+        try:
+            dom = conn.lookupByName(vm.code)
+            if dom.isActive():
+                dom.reboot()
+            else:
+                return Response("vm already off")
+        except Exception as e:
+            print(e)
+        return Response("vm is rebooting")
+
     @action(methods=['post'], detail=False)
     def update_ip(self, request):
         print(request.data)
@@ -58,10 +102,6 @@ class VmViewSet(viewsets.ModelViewSet):
             vm.virtual_mac = request.POST["virtual_mac"]
             vm.save()
         return Response(status=201)
-
-    # @action(methods=("get",), detail=False)
-    # def shutdown(self, request):
-    #     print(request.data)
 
 
 class PemFileViewSet(viewsets.ModelViewSet):
