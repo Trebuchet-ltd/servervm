@@ -18,5 +18,7 @@ from django.urls import path,include
 
 urlpatterns = [
     path('api/', include('home.urls')),
+    path('admin/log_viewer/', include('log_viewer.urls')),
     path('admin/', admin.site.urls),
+
 ]

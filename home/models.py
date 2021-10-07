@@ -68,3 +68,9 @@ class Storage(models.Model):
     size = models.IntegerField()
     file_path = models.CharField(max_length=50)
     vm = models.ForeignKey(VirtualMachine, on_delete=models.CASCADE, related_name="size")
+
+
+class SystemDetails(models.Model):
+    time = models.TimeField(auto_now_add=True)
+    ram_usage = models.FloatField()
+    cpu_usage = models.FloatField()

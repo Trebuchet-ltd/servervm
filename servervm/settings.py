@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'home.apps.HomeConfig',
     'rest_framework',
+    'log_viewer',
 ]
 
 MIDDLEWARE = [
@@ -83,16 +84,15 @@ CELERY_RESULT_BACKEND = 'django-db'
 # CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 # CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/1"
 
-CELERY_BEAT_SCHEDULE = {
-      'add-every-10-seconds': {
-        'task': 'myapp.tasks.add',
-        'schedule': 10.0,
-        'args': (16, 16),
-        'options': {
-            'expires': 15.0,
-        },
-        },
-}
+# CELERY_BEAT_SCHEDULE = {
+#       'add-every-10-seconds': {
+#         'task': 'myapp.tasks.add',
+#         'schedule': 10.0,
+#
+#         },
+# }
+
+
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -151,3 +151,80 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+LOG_VIEWER_FILES = ['v2.log', 'home.log', 'default.log']
+LOG_VIEWER_FILES_PATTERN = '*'
+LOG_VIEWER_FILES_DIR = os.path.join(BASE_DIR, 'logs')
+LOG_VIEWER_MAX_READ_LINES = 1000  # total log lines will be read
+LOG_VIEWER_PAGE_LENGTH = 25  # total log lines per-page
+# LOG_VIEWER_PATTERNS = [']OFNI[', ']GUBED[', ']GNINRAW[', ']RORRE[', ']LACITIRC[']
+LOG_VIEWER_PATTERNS = ['[INFO]', '[DEBUG]', '[WARNING]', '[ERROR]', '[CRITICAL]']
+# Optionally you can set the next variables in order to customize the admin:
+
+LOG_VIEWER_FILE_LIST_TITLE = "Custom title"
+LOG_VIEWER_FILE_LIST_STYLES = "/static/css/logs.css"
+LOGGING_ROOT = os.path.join(BASE_DIR, 'logs')
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'mail_admins': {
+            'level': 'INFO',
+            'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard'
+        },
+        'home': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGGING_ROOT, 'home.log'),
+            'maxBytes': 1024 * 1024 * 15,  # 5MB
+            'backupCount': 0,
+            'formatter': 'standard',
+        },
+        'default': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGGING_ROOT, 'default.log'),
+            'maxBytes': 1024 * 1024 * 15,  # 5MB
+            'backupCount': 0,
+            'formatter': 'standard',
+        },
+        'request_handler': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGGING_ROOT, 'request.log'),
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'standard',
+        },
+
+    },
+    'formatters': {
+        'standard': {
+            'format': "[%(levelname)s] [%(asctime)s] [%(name)s:%(lineno)s] %(message)s\n",
+            'datefmt': "%d/%b/%Y %H:%M:%S"
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console', 'default'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'home': {
+            'handlers': ['console', 'home'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['request_handler'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+    }
+}

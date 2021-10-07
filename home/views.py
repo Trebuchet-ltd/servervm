@@ -11,7 +11,7 @@ from .extra_functions import *
 import threading
 import time
 import servervm.settings as settings
-
+from .tasks import add
 
 class VmViewSet(viewsets.ModelViewSet):
     serializer_class = VirtualMachineSerializer
@@ -78,6 +78,11 @@ class VmViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(e)
         return Response("vm is rebooting")
+
+    @action(methods=['get'],detail=False)
+    def test(self, request):
+        add.delay()
+        return Response(status=201)
 
     @action(methods=['post'], detail=False)
     def update_ip(self, request):
