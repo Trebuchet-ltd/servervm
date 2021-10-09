@@ -7,3 +7,8 @@
 ./home/server_setup
 /home/template_changes.txt
 
+./logs
+./media
+./err.html
+./home/template funs
+./celerybeat-schedule
