@@ -17,7 +17,7 @@ class VirtualMachineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = VirtualMachine
-        fields = ["id", "code", "name", "memory", "storage", 'vcpus', "ip_address", "mac_address",
+        fields = ["id", "code", "name",'active',"memory", "storage", 'vcpus', "ip_address", "mac_address",
                   "os", "vpn_ip", "virtual_mac", 'pem_file']
         extra_kwargs = {
             'user': {'read_only': True},
@@ -26,6 +26,6 @@ class VirtualMachineSerializer(serializers.ModelSerializer):
             "virtual_mac": {'read_only': True},
             "mac_address": {'read_only': True},
             "code": {'read_only': True},
-
+            "active": {'read_only': True},
         }
 

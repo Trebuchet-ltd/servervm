@@ -34,13 +34,12 @@ app.conf.beat_schedule = {
         'schedule': 30.0,
     },
 }
+app.conf.beat_schedule = {
+    'vm monitoring in every 5 minutes': {
+        'task': 'home.tasks.monitor_vm',
+        'schedule': 60*3,
+    },
+}
 
 app.conf.timezone = 'Asia/Kolkata'
-# @app.task(bind=True)
-# def debug_task(self):
-#     print(f'Request: {self.request!r}')
-# celeryd --loglevel=INFO --settings=celeryconfig
 
-@app.task(bind=True)
-def debug_task(self):
-    print(f'Request: {self.request!r}')

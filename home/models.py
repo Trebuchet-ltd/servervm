@@ -47,6 +47,7 @@ class VirtualMachine(models.Model):
     user = models.ForeignKey(User, related_name="vm", on_delete=models.CASCADE)
     code = models.CharField(max_length=50, default=create_new_code, blank=True, null=True)
     name = models.CharField(max_length=25)
+    active = models.BooleanField(default=0)
     memory = models.PositiveIntegerField(default=4, help_text="in GB",
                                          validators=[MinValueValidator(1), MaxValueValidator(16)])
     vcpus = models.PositiveIntegerField(default=2, validators=[MinValueValidator(1), MaxValueValidator(20)])

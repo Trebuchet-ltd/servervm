@@ -2,7 +2,8 @@ from servervm.celery import *
 from home.models import SystemDetails
 import psutil
 import logging
-
+from .models import VirtualMachine
+import libvirt
 
 @app.task
 def add():
@@ -33,4 +34,17 @@ def add():
 
 @app.task
 def monitor_vm():
-    pass
+    vms = VirtualMachine.objects.all()
+    conn = libvirt.open("qemu:///system")
+    for vm in vms:
+
+        try:
+            dom = conn.lookupByName(vm.code)
+            logging.info(f"vm {vm.code}/{vm.name} 's active status in database {vm.active} actually {dom.isActive()}")
+            if vm.active and not dom.isActive():
+                logging.info(f"vm {vm.code}/{vm.name} is not on but it is active according to database ")
+                logging.info(f"vm {vm.code}/{vm.name} is starting  ")
+                dom.create()
+                logging.info(f"vm {vm.code}/{vm.name} is started  ")
+        except Exception as e:
+            logging.warning(e)

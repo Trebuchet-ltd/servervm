@@ -5,13 +5,12 @@ from rest_framework.decorators import action
 
 from .serializers import VirtualMachineSerializer, PemFileSerializer
 from .models import VirtualMachine, PemFile
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.response import Response
 from .extra_functions import *
 import threading
 import time
 import servervm.settings as settings
-from .tasks import add
 
 
 class VmViewSet(viewsets.ModelViewSet):
@@ -46,9 +45,14 @@ class VmViewSet(viewsets.ModelViewSet):
             if not dom.isActive():
                 dom.create()
             else:
+                if not vm.active:
+                    vm.active = True
+                    vm.save()
                 return Response("vm already active")
         except Exception as e:
             print(e)
+        vm.active = True
+        vm.save()
         return Response("vm started")
 
     @action(methods=['post'], detail=True)
@@ -61,9 +65,14 @@ class VmViewSet(viewsets.ModelViewSet):
                 dom.shutdown()
             except Exception as e:
                 print(e)
+                if vm.active:
+                    vm.active = False
+                    vm.save()
                 return Response("vm already off")
         except Exception as e:
             print(e)
+        vm.active = False
+        vm.save()
         return Response("vm shutdown")
 
     @action(methods=['post'], detail=True)
@@ -75,15 +84,12 @@ class VmViewSet(viewsets.ModelViewSet):
             if dom.isActive():
                 dom.reboot()
             else:
-                return Response("vm already off")
+                return Response("vm is off")
         except Exception as e:
             print(e)
+        # vm.active = 1
+        # vm.save()
         return Response("vm is rebooting")
-
-    @action(methods=['get'],detail=False)
-    def test(self, request):
-        add.delay()
-        return Response(status=201)
 
     @action(methods=['post'], detail=False)
     def update_ip(self, request):
