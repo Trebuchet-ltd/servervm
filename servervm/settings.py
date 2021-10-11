@@ -189,6 +189,14 @@ LOGGING = {
             'backupCount': 0,
             'formatter': 'standard',
         },
+        'tasks': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGGING_ROOT, 'tasks.log'),
+            'maxBytes': 1024 * 1024 * 15,  # 5MB
+            'backupCount': 0,
+            'formatter': 'standard',
+        },
         'default': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -221,6 +229,11 @@ LOGGING = {
         },
         'home': {
             'handlers': ['console', 'home'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'tasks': {
+            'handlers': ['console', 'tasks'],
             'level': 'INFO',
             'propagate': False,
         },

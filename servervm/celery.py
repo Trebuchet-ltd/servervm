@@ -3,6 +3,7 @@ from celery.schedules import crontab
 # from celery.decorators import periodic_task
 import logging
 from celery import Celery
+from celery.signals import worker_ready
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'servervm.settings')
@@ -37,9 +38,15 @@ app.conf.beat_schedule = {
 app.conf.beat_schedule = {
     'vm monitoring in every 5 minutes': {
         'task': 'home.tasks.monitor_vm',
-        'schedule': 60*3,
+        'schedule': 60 * 3,
     },
 }
 
-app.conf.timezone = 'Asia/Kolkata'
 
+@worker_ready.connect
+def at_start(sender, **k):
+    with sender.app.connection() as conn:
+        sender.app.send_task('home.tasks.monitor_vm', )
+
+
+app.conf.timezone = 'Asia/Kolkata'

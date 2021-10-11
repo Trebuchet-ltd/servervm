@@ -1,19 +1,25 @@
+import os
+
 from servervm.celery import *
 from home.models import SystemDetails
 import psutil
-import logging
 from .models import VirtualMachine
 import libvirt
 
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger("tasks")
+
+
 @app.task
 def add():
-    logging.info("system checking started")
-    logging.info("checking cpu usage")
+    logger.info("system checking started")
+    logger.info("checking cpu usage")
     cpu = psutil.cpu_percent()
-    logging.info(f"cpu usage is {cpu}%")
-    logging.info("checking ram usage")
+    logger.info(f"cpu usage is {cpu}%")
+    logger.info("checking ram usage")
     ram = psutil.virtual_memory().percent
-    logging.info(f"ram usage is {ram}%")
+    logger.info(f"ram usage is {ram}%")
     net_io = psutil.net_io_counters(pernic=False, nowrap=True)
 
     SystemDetails.objects.create(
@@ -29,7 +35,7 @@ def add():
             dropout=net_io.dropout,
             )
 
-    logging.info("checking completed")
+    logger.info("checking completed")
 
 
 @app.task
@@ -40,11 +46,11 @@ def monitor_vm():
 
         try:
             dom = conn.lookupByName(vm.code)
-            logging.info(f"vm {vm.code}/{vm.name} 's active status in database {vm.active} actually {dom.isActive()}")
+            logger.info(f"vm {vm.code}/{vm.name} 's active status in database {vm.active} actually {dom.isActive()}")
             if vm.active and not dom.isActive():
-                logging.info(f"vm {vm.code}/{vm.name} is not on but it is active according to database ")
-                logging.info(f"vm {vm.code}/{vm.name} is starting  ")
-                dom.create()
-                logging.info(f"vm {vm.code}/{vm.name} is started  ")
+                logger.info(f"vm {vm.code}/{vm.name} is not on but it is active according to database ")
+                logger.info(f"vm {vm.code}/{vm.name} is starting  ")
+                os.system(f"virsh start {vm.code}")
+                logger.info(f"vm {vm.code}/{vm.name} is started  ")
         except Exception as e:
-            logging.warning(e)
+            logger.warning(e)

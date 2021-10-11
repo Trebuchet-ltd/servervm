@@ -119,11 +119,9 @@ class VmViewSet(viewsets.ModelViewSet):
 
 
 class PemFileViewSet(viewsets.ModelViewSet):
-
     """
     Api end point to generate pem file
     """
-
     serializer_class = PemFileSerializer
     queryset = PemFile.objects.all()
     http_method_names = ["get", "post", "delete"]
