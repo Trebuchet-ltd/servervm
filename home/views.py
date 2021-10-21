@@ -1,32 +1,41 @@
 import os
 
+import django_filters
 from django.http import FileResponse
 from rest_framework.decorators import action
 
 from .serializers import VirtualMachineSerializer, PemFileSerializer
 from .models import VirtualMachine, PemFile
-from rest_framework import viewsets
+from rest_framework import viewsets, filters
 from rest_framework.response import Response
 from .extra_functions import *
 import threading
 import time
 import servervm.settings as settings
+from rest_framework import status
 
 
 class VmViewSet(viewsets.ModelViewSet):
     serializer_class = VirtualMachineSerializer
     queryset = VirtualMachine.objects.all()
     http_method_names = ['get', 'post', 'patch', 'delete']
+    filterset_fields = ['active',]
+    filter_backends = [filters.SearchFilter,django_filters.rest_framework.DjangoFilterBackend]
+    search_fields = ['code', 'name']
 
     def perform_create(self, serializer):
         instance = serializer.save(user=self.request.user)
         threading.Thread(target=create_vm, args=(instance,)).start()
 
     def perform_destroy(self, instance):
+        instance.maintenance = True
+        instance.save()
         threading.Thread(target=delete_vm, args=(instance,)).start()
 
     def update(self, request, *args, **kwargs):
         current_data = VirtualMachine.objects.get(id=self.request.data["id"])
+        current_data.maintenance = True
+        current_data.save()
         memory = current_data.memory
         storage = current_data.storage
         new_storage = self.request.data["storage"]
@@ -39,83 +48,101 @@ class VmViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], detail=True)
     def start(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
-        conn = libvirt.open("qemu:///system")
-        try:
-            dom = conn.lookupByName(vm.code)
-            if not dom.isActive():
-                dom.create()
-            else:
-                if not vm.active:
-                    vm.active = True
-                    vm.save()
-                return Response("vm already active")
-        except Exception as e:
-            print(e)
-        vm.active = True
-        vm.save()
-        return Response("vm started")
+        if not vm.maintenance:
+            conn = libvirt.open("qemu:///system")
+            try:
+                dom = conn.lookupByName(vm.code)
+                if not dom.isActive() :
+                    dom.create()
+                else:
+                    if not vm.active:
+                        vm.active = True
+                        vm.save()
+                    return Response("vm already active")
+            except Exception as e:
+                print(e)
+            vm.active = True
+            vm.save()
+
+            return Response("vm started")
+        else:
+            return Response("vm is at some maintenance please wait ...")
 
     @action(methods=['post'], detail=True)
     def stop(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
-        conn = libvirt.open("qemu:///system")
-        try:
-            dom = conn.lookupByName(vm.code)
+        if not vm.maintenance:
+            conn = libvirt.open("qemu:///system")
             try:
-                dom.shutdown()
+                dom = conn.lookupByName(vm.code)
+                try:
+                    dom.shutdown()
+                except Exception as e:
+                    print(e)
+                    if vm.active:
+                        vm.active = False
+                        vm.save()
+                    return Response("vm already off")
             except Exception as e:
                 print(e)
-                if vm.active:
-                    vm.active = False
-                    vm.save()
-                return Response("vm already off")
-        except Exception as e:
-            print(e)
-        vm.active = False
-        vm.save()
-        return Response("vm shutdown")
+            vm.active = False
+            vm.save()
+            return Response("vm shutdown")
+        else:
+            return Response("vm is at some maintenance please wait ...")
 
     @action(methods=['post'], detail=True)
     def restart(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
-        conn = libvirt.open("qemu:///system")
-        try:
-            dom = conn.lookupByName(vm.code)
-            if dom.isActive():
-                dom.reboot()
-            else:
-                return Response("vm is off")
-        except Exception as e:
-            print(e)
-        # vm.active = 1
-        # vm.save()
-        return Response("vm is rebooting")
+        if not vm.maintenance:
+            conn = libvirt.open("qemu:///system")
+            try:
+                dom = conn.lookupByName(vm.code)
+                if dom.isActive():
+                    dom.reboot()
+                else:
+                    return Response("vm is off")
+            except Exception as e:
+                print(e)
+            # vm.active = 1
+            # vm.save()
+            return Response("vm is rebooting")
+        else:
+            return Response("vm is at some maintenance please wait ...")
 
     @action(methods=['post'], detail=False)
     def update_ip(self, request):
         print(request.data)
         mac_address = request.data["mac_address"]
-        vm = VirtualMachine.objects.get(mac_address=mac_address)
-        if not vm.ip_address:
-            vm.ip_address = request.data["ip_address"]
-            vm.save()
-            os.system(f'ssh-keygen -f "/home/ubuntu/.ssh/known_hosts" -R "{vm.ip_address}"')
-            os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/{vm.code} <<y")
-            time.sleep(10)
-            os.system(f"sshpass -p '{settings.vm_template_password}' ssh-copy-id -f -i {vm.pem_file.file_path}.pub -o StrictHostKeyChecking=no user@{vm.ip_address} ")
-            print("one")
-            os.system(f"sshpass -p '{settings.vm_template_password}' ssh -o StrictHostKeyChecking=no user@{vm.ip_address} bash /var/local/setup.sh > err.html ")
-        return Response(status=201)
+        try:
+            vm = VirtualMachine.objects.get(mac_address=mac_address)
+            if not vm.ip_address:
+                vm.ip_address = request.data["ip_address"]
+                vm.save()
+                os.system(f'ssh-keygen -f "/home/ubuntu/.ssh/known_hosts" -R "{vm.ip_address}"')
+                os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/{vm.code} <<y")
+                time.sleep(10)
+                os.system(f"sshpass -p '{settings.vm_template_password}' ssh-copy-id -f -i {vm.pem_file.file_path}.pub -o StrictHostKeyChecking=no user@{vm.ip_address} ")
+                print("one")
+                os.system(f"sshpass -p '{settings.vm_template_password}' ssh -o StrictHostKeyChecking=no user@{vm.ip_address} bash /var/local/setup.sh > err.html ")
+        except VirtualMachine.DoesNotExist:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_202_ACCEPTED)
 
     @action(methods=['post'], detail=False)
     def set_vpn_ip(self, request):
         mac_address = request.POST["mac_address"]
-        vm = VirtualMachine.objects.get(mac_address=mac_address)
-        if not vm.vpn_ip:
-            vm.vpn_ip = request.POST["vpn_ip"]
-            vm.virtual_mac = request.POST["virtual_mac"]
-            vm.save()
-        return Response(status=201)
+        try:
+            vm = VirtualMachine.objects.get(mac_address=mac_address)
+            if not vm.vpn_ip:
+                vm.vpn_ip = request.POST["vpn_ip"]
+                vm.virtual_mac = request.POST["virtual_mac"]
+                vm.save()
+        except VirtualMachine.DoesNotExist:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_202_ACCEPTED)
 
 
 class PemFileViewSet(viewsets.ModelViewSet):

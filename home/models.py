@@ -52,14 +52,15 @@ class VirtualMachine(models.Model):
                                          validators=[MinValueValidator(1), MaxValueValidator(16)])
     vcpus = models.PositiveIntegerField(default=2, validators=[MinValueValidator(1), MaxValueValidator(20)])
     storage = models.PositiveIntegerField(default=20, help_text="in GB",
-                                          validators=[MinValueValidator(5), MaxValueValidator(100)])
+                                          validators=[MinValueValidator(5),])
 
     mac_address = models.CharField(max_length=50, blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
-    os=models.CharField(max_length=20,choices=available_os)
+    os = models.CharField(max_length=20,choices=available_os)
     vpn_ip = models.GenericIPAddressField(blank=True, null=True)
     virtual_mac = models.CharField(max_length=50, blank=True, null=True)
     pem_file = models.ForeignKey(PemFile, on_delete=models.PROTECT, related_name="vm", null=True, blank=True)
+    maintenance = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

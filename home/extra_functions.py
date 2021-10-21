@@ -102,6 +102,7 @@ def create_vm(instance):
     print(f"mac address is {mac_address}")
     instance.mac_address = mac_address
     Storage.objects.create(vm=instance, size=20, file_path=f"/var/kvm/images/{instance.code}.img")
+    instance.maintenance = False
     instance.save()
 
 
@@ -154,3 +155,6 @@ def update_vm(instance, memory, storage):
         conn.close()
     except Exception as e:
         print(e)
+    finally:
+        instance.maintenance = False
+        instance.save()

@@ -45,10 +45,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'home.apps.HomeConfig',
     'rest_framework',
     'log_viewer',
     'django_celery_beat',
+    'django_filters',
     'home',
 
 ]
