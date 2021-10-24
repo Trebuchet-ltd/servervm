@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 import string
 import random
 from django.core.validators import MaxValueValidator, MinValueValidator
+import os
 
 
 def create_new_pem_name():
@@ -64,6 +65,15 @@ class VirtualMachine(models.Model):
 
     def __str__(self):
         return self.name
+
+    def start(self):
+        os.system(f"virsh start {self.code}")
+
+    def shutdown(self):
+        os.system(f"virsh shutdown {self.code}")
+
+    def restart(self):
+        os.system(f"virsh start {self.code}")
 
 
 class Storage(models.Model):
