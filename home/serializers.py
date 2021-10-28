@@ -43,5 +43,5 @@ class GetVmPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = VmPlan
         fields = [
-            'memory', 'storage', 'amount', 'os','vcpus'
+           'name', 'memory', 'storage', 'amount', 'os', 'vcpus'
         ]

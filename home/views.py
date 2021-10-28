@@ -5,7 +5,7 @@ import django_filters
 from django.http import FileResponse
 from rest_framework.decorators import action
 
-from .serializers import VirtualMachineSerializer, PemFileSerializer
+from .serializers import VirtualMachineSerializer, PemFileSerializer,GetVmPlanSerializer
 from .models import VirtualMachine, PemFile, VmPlan
 from rest_framework import viewsets, filters, permissions
 from rest_framework.response import Response
@@ -202,3 +202,9 @@ class PemFileViewSet(viewsets.ModelViewSet):
             pem_file.save()
             return response
         return Response({"error": "you have already downloaded this file"})
+
+
+class VmPlanViewSet(viewsets.ModelViewSet):
+    serializer_class = GetVmPlanSerializer
+    queryset = VmPlan.objects.all()
+    http_method_names = ['get']

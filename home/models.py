@@ -121,6 +121,7 @@ class Tokens(models.Model):
 
 
 class VmPlan(models.Model):
+    name=models.CharField(max_length=20)
     memory = models.PositiveIntegerField(default=1, help_text="in GB",)
     vcpus = models.PositiveIntegerField(default=1)
     storage = models.PositiveIntegerField(default=10, help_text="in GB")
