@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import VirtualMachine,PemFile,SystemDetails
+from .models import VirtualMachine,PemFile,SystemDetails,VmPlan
 # Register your models here.
 
 
@@ -17,3 +17,7 @@ class PemAdmin(admin.ModelAdmin):
 class System(admin.ModelAdmin):
     pass
 
+
+@admin.register(VmPlan)
+class System(admin.ModelAdmin):
+    pass

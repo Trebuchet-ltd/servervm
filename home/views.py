@@ -1,12 +1,13 @@
+import logging
 import os
-
+from pathlib import Path
 import django_filters
 from django.http import FileResponse
 from rest_framework.decorators import action
 
 from .serializers import VirtualMachineSerializer, PemFileSerializer
-from .models import VirtualMachine, PemFile
-from rest_framework import viewsets, filters
+from .models import VirtualMachine, PemFile, VmPlan
+from rest_framework import viewsets, filters, permissions
 from rest_framework.response import Response
 from .extra_functions import *
 import threading
@@ -19,12 +20,24 @@ class VmViewSet(viewsets.ModelViewSet):
     serializer_class = VirtualMachineSerializer
     queryset = VirtualMachine.objects.all()
     http_method_names = ['get', 'post', 'patch', 'delete']
-    filterset_fields = ['active',]
-    filter_backends = [filters.SearchFilter,django_filters.rest_framework.DjangoFilterBackend]
+    filterset_fields = ['active', ]
+    filter_backends = [filters.SearchFilter, django_filters.rest_framework.DjangoFilterBackend]
     search_fields = ['code', 'name']
+    permission_classes = [permissions.IsAdminUser]
 
     def perform_create(self, serializer):
-        instance = serializer.save(user=self.request.user)
+
+        plan = self.request.data["plan"]
+        vm_plan = VmPlan.objects.get(id=plan)
+
+        instance = serializer.save(
+            user=self.request.user,
+            memory=vm_plan.memory,
+            vcpus=vm_plan.vcpus,
+            storage=vm_plan.storage,
+            os=vm_plan.os
+        )
+
         threading.Thread(target=create_vm, args=(instance,)).start()
 
     def perform_destroy(self, instance):
@@ -34,13 +47,24 @@ class VmViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         current_data = VirtualMachine.objects.get(id=self.request.data["id"])
+        plan = self.request.data["plan"]
+        vm_plan = VmPlan.objects.get(id=plan)
         current_data.maintenance = True
+
+        if vm_plan.id != current_data.plan:
+            current_data.memory = vm_plan.memory
+            current_data.vcpus = vm_plan.vcpus
+            current_data.storage = vm_plan.storage
+            current_data.os = vm_plan.os
+
         current_data.save()
         memory = current_data.memory
         storage = current_data.storage
         new_storage = self.request.data["storage"]
         print(f"{memory = }, {new_storage = } {storage = }")
-        res = super().update(self.request, *args, **kwargs)
+
+        res = super().update(self.request)
+
         current_data = VirtualMachine.objects.get(id=self.request.data["id"])
         threading.Thread(target=update_vm, args=(current_data, memory, storage)).start()
         return res
@@ -52,7 +76,7 @@ class VmViewSet(viewsets.ModelViewSet):
             conn = libvirt.open("qemu:///system")
             try:
                 dom = conn.lookupByName(vm.code)
-                if not dom.isActive() :
+                if not dom.isActive():
                     dom.create()
                 else:
                     if not vm.active:
@@ -104,8 +128,6 @@ class VmViewSet(viewsets.ModelViewSet):
                     return Response("vm is off")
             except Exception as e:
                 print(e)
-            # vm.active = 1
-            # vm.save()
             return Response("vm is rebooting")
         else:
             return Response("vm is at some maintenance please wait ...")
@@ -116,15 +138,21 @@ class VmViewSet(viewsets.ModelViewSet):
         mac_address = request.data["mac_address"]
         try:
             vm = VirtualMachine.objects.get(mac_address=mac_address)
+            print(f"{vm.name} called for update ip")
             if not vm.ip_address:
                 vm.ip_address = request.data["ip_address"]
+                print("setting ip address")
                 vm.save()
                 os.system(f'ssh-keygen -f "/home/ubuntu/.ssh/known_hosts" -R "{vm.ip_address}"')
-                os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/{vm.code} <<y")
+                if not os.path.exists(f"~/servervm/media/{vm.user.username}"):
+                    os.makedirs(f"~/servervm/media/{vm.user.username}")
+                os.system(f"ssh-keygen -q -t rsa -N '' -f /home/ubuntu/servervm/media/{vm.user.username}/{vm.code} <<y")
                 time.sleep(10)
-                os.system(f"sshpass -p '{settings.vm_template_password}' ssh-copy-id -f -i {vm.pem_file.file_path}.pub -o StrictHostKeyChecking=no user@{vm.ip_address} ")
+                os.system(
+                    f"sshpass -p '{settings.vm_template_password}' ssh-copy-id -f -i {vm.pem_file.file_path}.pub -o StrictHostKeyChecking=no user@{vm.ip_address} ")
                 print("one")
-                os.system(f"sshpass -p '{settings.vm_template_password}' ssh -o StrictHostKeyChecking=no user@{vm.ip_address} bash /var/local/setup.sh > err.html ")
+                os.system(
+                    f"sshpass -p '{settings.vm_template_password}' ssh -o StrictHostKeyChecking=no user@{vm.ip_address} bash /var/local/setup.sh > err.html ")
         except VirtualMachine.DoesNotExist:
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
@@ -152,6 +180,7 @@ class PemFileViewSet(viewsets.ModelViewSet):
     serializer_class = PemFileSerializer
     queryset = PemFile.objects.all()
     http_method_names = ["get", "post", "delete"]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
         name = self.request.data['name']
@@ -173,4 +202,3 @@ class PemFileViewSet(viewsets.ModelViewSet):
             pem_file.save()
             return response
         return Response({"error": "you have already downloaded this file"})
-

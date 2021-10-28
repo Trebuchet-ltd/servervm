@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import VirtualMachine,PemFile
+from .models import VirtualMachine,PemFile,Tokens,VmPlan
 
 
 class PemFileSerializer(serializers.ModelSerializer):
@@ -29,3 +29,19 @@ class VirtualMachineSerializer(serializers.ModelSerializer):
             "active": {'read_only': True},
         }
 
+
+class GetTokensSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tokens
+        fields = [
+            'user', 'private_token', 'invite_token', 'invited', 'points',
+
+        ]
+
+
+class GetVmPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VmPlan
+        fields = [
+            'memory', 'storage', 'amount', 'os','vcpus'
+        ]

@@ -3,12 +3,8 @@ import re
 import os
 import subprocess
 import time
-from .models import Storage
+
 import math
-
-
-def show_domains():
-    os.system("virsh list --all")
 
 
 def set_storage(instance):
@@ -101,15 +97,13 @@ def create_vm(instance):
     mac_address = re.search(r"<mac address='([A-Za-z0-9:]+)'", dom.XMLDesc(0)).groups()[0]
     print(f"mac address is {mac_address}")
     instance.mac_address = mac_address
-    Storage.objects.create(vm=instance, size=20, file_path=f"/var/kvm/images/{instance.code}.img")
     instance.maintenance = False
     instance.save()
 
 
 def delete_vm(instance):
     print("deleting vm")
-    # os.system(f"rm /home/ubuntu/servervm/media/{instance.user}/{instance.code}")
-    # os.system(f"rm /home/ubuntu/servervm/media/{instance.user}/{instance.code}.pub")
+
     conn = libvirt.open("qemu:///system")
     try:
         dom = conn.lookupByName(instance.code)
@@ -130,7 +124,6 @@ def update_vm(instance, memory, storage):
         if dom.isActive():
             dom.shutdown()
             time.sleep(20)
-            show_domains()
 
         if storage < instance.storage:
             print("updating storage")
