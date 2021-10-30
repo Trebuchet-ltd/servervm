@@ -2,11 +2,11 @@ import logging
 import os
 from pathlib import Path
 import django_filters
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponseRedirect
 from rest_framework.decorators import action
 
-from .serializers import VirtualMachineSerializer, PemFileSerializer,GetVmPlanSerializer
-from .models import VirtualMachine, PemFile, VmPlan
+from .serializers import VirtualMachineSerializer, PemFileSerializer, GetVmPlanSerializer, VmRequestSerializer
+from .models import VirtualMachine, PemFile, VmPlan,VmRequest
 from rest_framework import viewsets, filters, permissions
 from rest_framework.response import Response
 from .extra_functions import *
@@ -15,6 +15,8 @@ import time
 import servervm.settings as settings
 from rest_framework import status
 from authentication.permissions import IsOwner
+from rest_framework.decorators import api_view
+from django.http import HttpResponseRedirect
 
 
 class VmViewSet(viewsets.ModelViewSet):
@@ -128,7 +130,7 @@ class VmViewSet(viewsets.ModelViewSet):
         else:
             return Response("vm is at some maintenance please wait ...")
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['post'], detail=False, permission_classes=[permissions.AllowAny])
     def update_ip(self, request):
         print(request.data)
         mac_address = request.data["mac_address"]
@@ -154,7 +156,7 @@ class VmViewSet(viewsets.ModelViewSet):
         else:
             return Response(status=status.HTTP_202_ACCEPTED)
 
-    @action(methods=['post'], detail=False)
+    @action(methods=['post'], detail=False,permission_classes=[permissions.AllowAny])
     def set_vpn_ip(self, request):
         mac_address = request.POST["mac_address"]
         try:
@@ -204,3 +206,31 @@ class VmPlanViewSet(viewsets.ModelViewSet):
     serializer_class = GetVmPlanSerializer
     queryset = VmPlan.objects.all()
     http_method_names = ['get']
+
+
+class VmRequestAPiViewSet(viewsets.ModelViewSet):
+    serializer_class = VmRequestSerializer
+    queryset = VmRequest.objects.all()
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    http_method_names = ['get', 'post', 'patch']
+
+    def perform_create(self, serializer):
+        obj = serializer.save(user=self.request.user)
+        get_payment_link(self.request.user, obj)
+
+
+@api_view(["GET"])
+def payment(request):
+    print(request)
+    logger.info("Webhook from razorpay called ...")
+    if verify_signature(request):
+        transaction_id = request.GET["razorpay_payment_link_reference_id"]
+        handle_payment(transaction_id)
+    else:
+        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+    return HttpResponseRedirect(settings.webhook_redirect_url)
+
+
+
+

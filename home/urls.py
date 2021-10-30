@@ -8,6 +8,8 @@ router = DefaultRouter()
 router.register(r"virtual_machines", views.VmViewSet)
 router.register(r'pem_file', views.PemFileViewSet)
 router.register(r'plans', views.VmPlanViewSet)
+router.register(r'request', views.VmRequestAPiViewSet)
 urlpatterns = [
     path(r'', include(router.urls)),
+    path(r'payment/', views.payment)
 ]
