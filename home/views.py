@@ -14,6 +14,7 @@ import threading
 import time
 import servervm.settings as settings
 from rest_framework import status
+from authentication.permissions import IsOwner
 
 
 class VmViewSet(viewsets.ModelViewSet):
@@ -26,10 +27,8 @@ class VmViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
 
     def perform_create(self, serializer):
-
         plan = self.request.data["plan"]
         vm_plan = VmPlan.objects.get(id=plan)
-
         instance = serializer.save(
             user=self.request.user,
             memory=vm_plan.memory,
@@ -37,7 +36,6 @@ class VmViewSet(viewsets.ModelViewSet):
             storage=vm_plan.storage,
             os=vm_plan.os
         )
-
         threading.Thread(target=create_vm, args=(instance,)).start()
 
     def perform_destroy(self, instance):
@@ -62,9 +60,7 @@ class VmViewSet(viewsets.ModelViewSet):
         storage = current_data.storage
         new_storage = self.request.data["storage"]
         print(f"{memory = }, {new_storage = } {storage = }")
-
         res = super().update(self.request)
-
         current_data = VirtualMachine.objects.get(id=self.request.data["id"])
         threading.Thread(target=update_vm, args=(current_data, memory, storage)).start()
         return res
@@ -180,7 +176,7 @@ class PemFileViewSet(viewsets.ModelViewSet):
     serializer_class = PemFileSerializer
     queryset = PemFile.objects.all()
     http_method_names = ["get", "post", "delete"]
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsOwner]
 
     def perform_create(self, serializer):
         name = self.request.data['name']

@@ -77,11 +77,15 @@ def signin(request):
     if request.method == "POST":
         email = request.POST["email"]
         password = request.POST["password"]
-        print(email, password)
+        user = User.objects.get(username=email)
+
+        print (f"{user.check_password(password) = }")
+
         if not email or not password:
             context1['pswderr'] = "Text fields cannot be empty"
         user = authenticate(request, username=email, password=password)
 
+        print(user)
         if user is not None:
             login(request, user)
             # Redirect to a success page.
@@ -105,6 +109,7 @@ def signup(request):
         password = request.POST.get("password")
         passwrd2 = request.POST.get("password retype")
         username = request.POST.get("username", '')
+        logger.info(f"{email = } {password = } {passwrd2} {username = }")
         if not email:
             context1['pswderr'] = 'Email cannot be empty'
             logger.info('Email was empty')
@@ -140,6 +145,7 @@ def signup(request):
                 logger.info('Password Does not match')
                 context1['pswderr'] = 'Password Does not match'
 
+
     next_loc = request.GET.get('next', '')
     context1['sign_text'] = "Register"
     context1['invite'] = get_item_from_url(next_loc, 'invite')
@@ -164,6 +170,7 @@ def request_google(auth_code, redirect_uri):
             'redirect_uri': redirect_uri,
             'grant_type': 'authorization_code'}
     r = requests.post('https://oauth2.googleapis.com/token', data=data)
+    print(r.content.decode())
     try:
         logger.info('google auth_login ')
         content = json.loads(r.content.decode())
@@ -201,7 +208,6 @@ def Google_login(request):
     state = request.GET.get('state', '/')
     auth_code = request.GET.get('code')
     redirect_uri = settings.DEPLOYMENT_URL + '/google-login'
-
     next_loc = get_item_from_url(state, 'next', '/')
     logger.info('next ' + next_loc)
     invite_token = get_item_from_url(next_loc, 'invite')
@@ -223,89 +229,5 @@ def Google_login(request):
             except:
                 logger.exception('failed to create token')
 
-        return HttpResponseRedirect(next_loc)
-    return HttpResponseRedirect('/login/')
-
-
-def request_facebook(auth_code, redirect_uri):
-    data = {'code': auth_code,
-            'client_id': settings.SOCIAL_AUTH_FACEBOOK_KEY,
-            'client_secret': settings.SOCIAL_AUTH_FACEBOOK_SECRET,
-            'redirect_uri': 'https://127.0.0.1:8000/facebook-login',
-            'grant_type': 'authorization_code'}
-    print(data)
-    r = requests.get('https://graph.facebook.com/v11.0/oauth/access_token?', params=data)
-    try:
-        logger.info('facebook auth_login ')
-        content = json.loads(r.content.decode())
-        print(content)
-        token = content["access_token"]
-        logger.info('token is ' + token)
-        return token
-    except Exception as e:
-        logger.exception('facebook auth_login fail')
-        logger.debug(r.content.decode())
-        return False
-
-
-def convert_facebook_token(token, client_id):
-    try:
-        application = Application.objects.get(client_id=client_id)
-    except:
-        logger.exception('failed to get application')
-        return False
-    data = {
-        'grant_type': 'convert_token',
-        'client_id': application.client_id,
-        'client_secret': application.client_secret,
-        'backend': 'facebook',
-        'token': token
-    }
-    logger.info('trying to trying url')
-    url = 'http://127.0.0.1:8000/auth/social/convert-token'
-    r = requests.post(url, data=data)
-    logger.info('recived the request')
-    try:
-        logger.info('facebook auth_login convert')
-        cont = json.loads(r.content.decode())
-        print(cont)
-        access_token = cont['access_token']
-        return access_token
-    except Exception as e:
-        logger.exception('facebook convert failed')
-        print(e)
-        logger.debug(r.content.decode())
-        return False
-
-
-def Facebook_login(request):
-    state = request.GET.get('state', '/')
-    auth_code = request.GET.get('code')
-    logger.info('url is ', settings.DEPLOYMENT_URL)
-    redirect_uri = settings.DEPLOYMENT_URL + '/facebook-login/'
-    print(redirect_uri)
-    next_loc = get_item_from_url(state, 'next', '/')
-    logger.info('next ' + next_loc)
-    invite_token = get_item_from_url(next_loc, 'invite')
-    client_id = get_client_id(next_loc)
-    logger.info('Recived client id ' + client_id)
-    logger.info('Trying access token')
-    token = request_facebook(auth_code, redirect_uri)
-    logger.info('Trying access token')
-    if token:
-        logger.info('Trying access token')
-        access_token = convert_facebook_token(token, client_id)
-        logger.info('received access token')
-        if access_token:
-            user = AccessToken.objects.get(token=access_token).user
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            try:
-
-                token, _ = Tokens.objects.get_or_create(user=user)
-                if not token.invite_token:
-                    token.invite_token = invite_token
-                token.save()
-            except:
-                logger.exception('failed to create token')
         return HttpResponseRedirect(next_loc)
     return HttpResponseRedirect('/login/')
