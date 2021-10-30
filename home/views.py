@@ -1,12 +1,10 @@
-import logging
-import os
-from pathlib import Path
+
 import django_filters
-from django.http import FileResponse, HttpResponseRedirect
+from django.http import FileResponse
 from rest_framework.decorators import action
 
-from .serializers import VirtualMachineSerializer, PemFileSerializer, GetVmPlanSerializer, VmRequestSerializer
-from .models import VirtualMachine, PemFile, VmPlan,VmRequest
+from .serializers import VirtualMachineSerializer, PemFileSerializer, GetVmPlanSerializer, VmRequestSerializer,MarketingMemberSerializer
+from .models import VirtualMachine, PemFile, VmPlan,VmRequest,MarketingMember
 from rest_framework import viewsets, filters, permissions
 from rest_framework.response import Response
 from .extra_functions import *
@@ -27,6 +25,9 @@ class VmViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, django_filters.rest_framework.DjangoFilterBackend]
     search_fields = ['code', 'name']
     permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self):
+        return VirtualMachine.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         plan = self.request.data["plan"]
@@ -67,7 +68,7 @@ class VmViewSet(viewsets.ModelViewSet):
         threading.Thread(target=update_vm, args=(current_data, memory, storage)).start()
         return res
 
-    @action(methods=['post'], detail=True)
+    @action(methods=['post'], detail=True, permission_classes=[IsOwner])
     def start(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
         if not vm.maintenance:
@@ -90,7 +91,7 @@ class VmViewSet(viewsets.ModelViewSet):
         else:
             return Response("vm is at some maintenance please wait ...")
 
-    @action(methods=['post'], detail=True)
+    @action(methods=['post'], detail=True,permission_classes=[IsOwner])
     def stop(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
         if not vm.maintenance:
@@ -113,7 +114,7 @@ class VmViewSet(viewsets.ModelViewSet):
         else:
             return Response("vm is at some maintenance please wait ...")
 
-    @action(methods=['post'], detail=True)
+    @action(methods=['post'], detail=True,permission_classes=[IsOwner])
     def restart(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
         if not vm.maintenance:
@@ -180,6 +181,9 @@ class PemFileViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "delete"]
     permission_classes = [IsOwner]
 
+    def get_queryset(self):
+        return PemFile.objects.filter(user=self.request.user)
+
     def perform_create(self, serializer):
         name = self.request.data['name']
         os.makedirs(f"/home/ubuntu/servervm/media/{self.request.user}", exist_ok=True)
@@ -218,6 +222,18 @@ class VmRequestAPiViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         obj = serializer.save(user=self.request.user)
         get_payment_link(self.request.user, obj)
+
+
+class MarketingMemberViewSet(viewsets.ModelViewSet):
+    serializer_class = MarketingMemberSerializer
+    queryset = MarketingMember.objects.all()
+    permission_classes = [IsOwner]
+    http_method_names = ['get']
+
+    def get_queryset(self):
+        if self.request.user.marketing.exists():
+            return MarketingMember.objects.get(user=self.request.user)
+        return MarketingMember.objects.none()
 
 
 @api_view(["GET"])

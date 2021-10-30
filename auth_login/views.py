@@ -77,22 +77,18 @@ def signin(request):
     if request.method == "POST":
         email = request.POST["email"]
         password = request.POST["password"]
-        user = User.objects.get(username=email)
-
-        print (f"{user.check_password(password) = }")
-
         if not email or not password:
             context1['pswderr'] = "Text fields cannot be empty"
-        user = authenticate(request, username=email, password=password)
+        try:
+            user = authenticate(request, username=email, password=password)
+            if user is not None:
+                login(request, user)
+                # Redirect to a success page.
+                redirect_location = request.GET.get('next', '/') + '?' + request.META['QUERY_STRING']
+                return HttpResponseRedirect(redirect_location)
+        except User.DoesNotExist:
+            context1['pswderr'] = "user does not exist"
 
-        print(user)
-        if user is not None:
-            login(request, user)
-            # Redirect to a success page.
-            redirect_location = request.GET.get('next', '/') + '?' + request.META['QUERY_STRING']
-            return HttpResponseRedirect(redirect_location)
-        else:
-            context1['pswderr'] = "Invalid Credentials"
     context1['sign_text'] = 'Sign In'
     context1['GOOGLE_CLIENT_ID'] = settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
     context1['google_redirect_uri'] = settings.DEPLOYMENT_URL + '/google-login'

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import VirtualMachine,PemFile,Tokens,VmPlan,VmRequest
+from .models import VirtualMachine,PemFile,Tokens,VmPlan,VmRequest,MarketingMember
 
 
 class PemFileSerializer(serializers.ModelSerializer):
@@ -56,3 +56,10 @@ class VmRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = VmRequest
         fields = ['name', 'pem_file', 'plan', 'month', 'payment_status', 'date', 'payment_id', 'payment_link']
+
+
+class MarketingMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MarketingMember
+
+        fields = ["user","coupon","credits","total_credits","total_clients","total_active_clients"]
