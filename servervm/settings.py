@@ -67,6 +67,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'home',
     'auth_login',
+    'marketing',
+
 
 ]
 
@@ -306,6 +308,14 @@ LOGGING = {
             'backupCount': 0,
             'formatter': 'standard',
         },
+        'marketing': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGGING_ROOT, 'marketing.log'),
+            'maxBytes': 1024 * 1024 * 15,  # 5MB
+            'backupCount': 0,
+            'formatter': 'standard',
+        },
         'request_handler': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -333,11 +343,17 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'marketing': {
+            'handlers': ['console', 'marketing'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'tasks': {
             'handlers': ['console', 'tasks'],
             'level': 'INFO',
             'propagate': False,
         },
+
         'django.request': {
             'handlers': ['request_handler'],
             'level': 'DEBUG',

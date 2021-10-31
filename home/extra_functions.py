@@ -4,19 +4,17 @@ import threading
 import libvirt
 import re
 import os
-import subprocess
 import time
 import logging
 import math
 import requests
 from requests.auth import HTTPBasicAuth
-import datetime
 import servervm.settings as settings
 import hmac
 import hashlib
 import string
-from .models import VmRequest,VirtualMachine
-
+from .models import VirtualMachine
+from marketing.models import VmRequest
 logger = logging.getLogger("home")
 
 

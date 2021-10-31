@@ -44,6 +44,7 @@ schema_view = get_schema_view(
 urlpatterns = [
 
                   path('api/', include('home.urls')),
+                  path('markering/', include('marketing.urls')),
                   path('auth/', include('authentication.urls')),
                   path('', include('auth_login.urls')),
                   path('openid/', include('oidc_provider.urls', namespace='oidc_provider')),
