@@ -6,10 +6,10 @@ from .models import VirtualMachine,PemFile,Tokens
 class PemFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = PemFile
-        fields = ["id", 'name',"user", "created_date", "file_path"]
+        fields = ["id", 'name', "user", "created_date", ]
         extra_kwargs = {
             'user': {'read_only': True},
-            "file_path": {'read_only': True},
+            'created_date': {'read_only': True},
         }
 
 
@@ -18,7 +18,7 @@ class VirtualMachineSerializer(serializers.ModelSerializer):
     class Meta:
         model = VirtualMachine
         fields = ["id", "code", "name",'active',"memory", "storage", 'vcpus', "ip_address", "mac_address",
-                  "os", "vpn_ip", "virtual_mac", 'pem_file', 'plan']
+                  "os", "vpn_ip", "virtual_mac", 'pem_file', 'plan', 'expiry_date']
         extra_kwargs = {
             'user': {'read_only': True},
             'memory': {'read_only': True},
@@ -32,6 +32,7 @@ class VirtualMachineSerializer(serializers.ModelSerializer):
             "mac_address": {'read_only': True},
             "code": {'read_only': True},
             "active": {'read_only': True},
+            "expiry_date": {'read_only': True},
         }
 
 

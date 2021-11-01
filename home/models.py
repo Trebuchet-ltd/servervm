@@ -65,6 +65,8 @@ class VirtualMachine(models.Model):
     pem_file = models.ForeignKey(PemFile, on_delete=models.PROTECT, related_name="vm", null=True, blank=True)
     maintenance = models.BooleanField(default=True)
     plan = models.ForeignKey(VmPlan, related_name='vm', on_delete=models.RESTRICT)
+    expiry_date = models.DateField(blank=True, null=True)
+
 
     def __str__(self):
         return self.name

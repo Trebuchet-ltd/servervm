@@ -171,6 +171,17 @@ class VmViewSet(viewsets.ModelViewSet):
         else:
             return Response(status=status.HTTP_202_ACCEPTED)
 
+    # @action(methods=["post"],detail=True,permission_classes=[IsOwner])
+    # def renew_payment(self, request, pk):
+    #     month = request.data["month"]
+    #     vm = VirtualMachine.objects.get(pk=pk)
+    #     vm_req = Transaction.objects.create(user=request.user,vm=vm,name=vm.name,plan=vm.plan,month=month,pem_file=vm.pem_file)
+    #     payment_url = get_payment_link(request.user, vm_req)
+    #     if payment_url:
+    #         return Response({"payment_url": payment_url},status=status.HTTP_202_ACCEPTED)
+    #     return Response({"detail": "payment link creation failed"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+    #
+
 
 class PemFileViewSet(viewsets.ModelViewSet):
     """

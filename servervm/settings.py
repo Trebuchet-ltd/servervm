@@ -37,7 +37,7 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 ALLOWED_HOSTS = ['*']
@@ -161,7 +161,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-DEPLOYMENT_URL = 'https://console.tsp.trebuchet.one'
+DEPLOYMENT_URL = 'https://api.tsp.trebuchet.one'
 if DEBUG:
     STATICFILES_DIRS = [
         BASE_DIR / "static",

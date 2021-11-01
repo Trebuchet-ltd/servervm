@@ -14,7 +14,9 @@ import hmac
 import hashlib
 import string
 from .models import VirtualMachine
-from marketing.models import VmRequest
+from marketing.models import Transaction
+from datetime import timedelta,date
+
 logger = logging.getLogger("home")
 
 
@@ -202,7 +204,7 @@ def create_new_unique_id():
     unique_id = new_id_generator()
     while not_unique:
         unique_id = new_id_generator()
-        if not VmRequest.objects.filter(transaction_id=unique_id):
+        if not Transaction.objects.filter(transaction_id=unique_id):
             not_unique = False
     return str(unique_id)
 
@@ -275,17 +277,37 @@ def get_payment_link(user, vm_request):
 
 
 def handle_payment(transaction_id):
-    vm_request = VmRequest.objects.get(transaction_id=transaction_id)
+    vm_request = Transaction.objects.get(transaction_id=transaction_id)
+    if not vm_request.vm:
+        vm_plan = vm_request.plan
 
-    vm_plan = vm_request.plan
+        vm = VirtualMachine.objects.create(
+            user=vm_request.user,
+            name=vm_request.name,
+            memory=vm_plan.memory,
+            vcpus=vm_plan.vcpus,
+            storage=vm_plan.storage,
+            os=vm_plan.os,
+            pem_file=vm_request.pem_file,
+            plan=vm_plan,
+            expiry_date=date.today() + timedelta(days=vm_request.month * 30)
+        )
+        vm_request.vm = vm
+        vm_request.save()
+        threading.Thread(target=create_vm, args=(vm,)).start()
+    elif vm_request.vm and vm_request.plan == vm_request.vm.plan:
+        vm = vm_request.vm
+        vm.expiry_date += timedelta(days=vm_request.month * 30)
+        vm.save()
+    elif vm_request.plan != vm_request.vm.plan:
+        current_vm = vm_request.vm
+        vm_plan = vm_request.plan
+        current_vm.maintenance = True
+        current_vm.memory = vm_plan.memory
+        current_vm.vcpus = vm_plan.vcpus
+        current_vm.storage = vm_plan.storage
+        current_vm.save()
+        threading.Thread(target=update_vm, args=(current_vm, vm_plan.memory, vm_plan.storage)).start()
 
-    vm = VirtualMachine.objects.create(
-        user=vm_request.user,
-        memory=vm_plan.memory,
-        vcpus=vm_plan.vcpus,
-        storage=vm_plan.storage,
-        os=vm_plan.os,
-        pem_file=vm_request.pem_file,
-        plan=vm_plan
-    )
-    threading.Thread(target=create_vm, args=(vm,)).start()
+
+

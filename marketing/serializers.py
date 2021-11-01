@@ -1,20 +1,20 @@
 from rest_framework import serializers
 
-from .models import VmPlan, VmRequest, MarketingMember
+from .models import VmPlan, Transaction, MarketingMember
 
 
 class GetVmPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = VmPlan
         fields = [
-            'name', 'memory', 'storage', 'amount', 'os', 'vcpus'
+            'id', 'name', 'memory', 'storage', 'amount', 'os', 'vcpus', 'image'
         ]
 
 
-class VmRequestSerializer(serializers.ModelSerializer):
+class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = VmRequest
-        fields = ['name', 'pem_file', 'plan', 'month', 'payment_status', 'date', 'payment_id', 'payment_link']
+        model = Transaction
+        fields = ['id', 'name', 'vm', 'pem_file', 'plan', 'month', 'payment_status', 'date', 'payment_id', 'payment_link']
         extra_kwargs = {
             'payment_status': {'read_only': True},
             'date': {'read_only': True},
@@ -35,5 +35,4 @@ class MarketingMemberSerializer(serializers.ModelSerializer):
             'total_credits': {'read_only': True},
             'total_clients': {'read_only': True},
             'total_active_clients': {'read_only': True},
-
         }

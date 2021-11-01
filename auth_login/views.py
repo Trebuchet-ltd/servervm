@@ -92,8 +92,7 @@ def signin(request):
     context1['sign_text'] = 'Sign In'
     context1['GOOGLE_CLIENT_ID'] = settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
     context1['google_redirect_uri'] = settings.DEPLOYMENT_URL + '/google-login'
-    context1['FACEBOOK_CLIENT_ID'] = settings.SOCIAL_AUTH_FACEBOOK_KEY
-    context1['facebook_redirect_uri'] = settings.DEPLOYMENT_URL + '/facebook-login'
+
     return render(request, template_name='login.html', context=context1)
 
 
@@ -147,8 +146,6 @@ def signup(request):
     context1['invite'] = get_item_from_url(next_loc, 'invite')
     context1['redirect_uri'] = settings.DEPLOYMENT_URL + '/google-login'
     context1['GOOGLE_CLIENT_ID'] = settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
-    context1['FACEBOOK_CLIENT_ID'] = settings.SOCIAL_AUTH_FACEBOOK_KEY
-    context1['facebook_redirect_uri'] = settings.DEPLOYMENT_URL + '/facebook-login'
     return render(request, template_name="signup.html", context=context1)
 
 

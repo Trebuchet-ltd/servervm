@@ -13,7 +13,7 @@ class MarketingMembers(admin.ModelAdmin):
     pass
 
 
-@admin.register(models.VmRequest)
-class VmRequest(admin.ModelAdmin):
+@admin.register(models.Transaction)
+class Transaction(admin.ModelAdmin):
     pass
 

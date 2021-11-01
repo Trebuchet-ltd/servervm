@@ -6,7 +6,7 @@ from . import views
 router = DefaultRouter()
 
 router.register(r'plans', views.VmPlanViewSet)
-router.register(r'request', views.VmRequestAPiViewSet)
+router.register(r'request', views.TransactionAPiViewSet)
 
 router.register(r'marketing', views.MarketingMemberViewSet)
 
