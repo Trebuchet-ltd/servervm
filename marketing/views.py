@@ -1,12 +1,10 @@
-#
+
 # import django_filters
 # from django.http import FileResponse
 # from rest_framework.decorators import action
 import logging
-
 from .serializers import GetVmPlanSerializer, TransactionSerializer, MarketingMemberSerializer
 from .models import VmPlan, Transaction, MarketingMember
-
 from rest_framework import viewsets, filters, permissions
 from rest_framework.response import Response
 from home.extra_functions import handle_payment, verify_signature, get_payment_link
@@ -82,16 +80,16 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if vm:
-            vm_obj = VirtualMachine.objects.get(id=vm)
-            # Transaction.objects.create(user=request.user,name= )
+        # if vm:
+        #     vm_obj = VirtualMachine.objects.get(id=vm)
+        #     # Transaction.objects.create(user=request.user,name= )
+        #
+        #     # logger.debug(obj)
+        # else:
+        obj = serializer.save()
+        #     logger.debug(obj)
 
-            # logger.debug(obj)
-        else:
-            obj = serializer.save()
-            logger.debug(obj)
-
-        # get_payment_link(self.request.user,obj)
+        get_payment_link(self.request.user,obj)
         return Response(status=221)
 
 
@@ -111,6 +109,18 @@ class MarketingMemberViewSet(viewsets.ModelViewSet):
 def payment(request):
     print(request)
     logger.info("Webhook from razorpay called ...")
+    if verify_signature(request):
+        transaction_id = request.GET["razorpay_payment_link_reference_id"]
+        handle_payment(transaction_id)
+    else:
+        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+    return HttpResponseRedirect(settings.webhook_redirect_url)
+
+
+@api_view(["GET"])
+def checkout(request):
+    print(request)
+    logger.info("user requested to checkout")
     if verify_signature(request):
         transaction_id = request.GET["razorpay_payment_link_reference_id"]
         handle_payment(transaction_id)

@@ -190,10 +190,10 @@ class PemFileViewSet(viewsets.ModelViewSet):
     serializer_class = PemFileSerializer
     queryset = PemFile.objects.all()
     http_method_names = ["get", "post", "delete"]
-    permission_classes = [IsOwner]
+    permission_classes = [IsOwner,permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return PemFile.objects.filter(user=self.request.user)
+        return PemFile.objects.filter(user=self.request.user.id)
 
     def perform_create(self, serializer):
         name = self.request.data['name']

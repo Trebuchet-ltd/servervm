@@ -40,7 +40,14 @@ class GetTokensSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tokens
         fields = [
-            'user', 'private_token', 'invite_token', 'invited', 'points',
+            'user', 'private_token', 'invite_token', 'invited', 'points', 'phone_number'
 
         ]
+        extra_kwargs = {
+            'user': {'read_only': True},
+            'private_token': {'read_only': True},
+            'invite_token': {'read_only': True},
+            'invited': {'read_only': True},
+            'points': {'read_only': True},
+        }
 

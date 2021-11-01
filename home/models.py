@@ -114,11 +114,10 @@ class Tokens(models.Model):
     private_token = models.CharField(max_length=10, unique=True, default=create_new_id)
     invited = models.IntegerField(default=0)
     points = models.IntegerField(default=0)
-    reviews = models.IntegerField(default=0)
     invite_token = models.CharField(max_length=10, blank=True, null=True)
-    first_purchase_done = models.BooleanField(default=False)
-    total_points_yet = models.IntegerField(default=0)
-    amount_saved = models.IntegerField(default=0)
+    phone_number = models.CharField(max_length=12, default="")
+    credits = models.FloatField(default=0)
+    # profile = models.ImageField()
 
     def __str__(self):
         return f"{self.user} "

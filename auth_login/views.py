@@ -140,7 +140,6 @@ def signup(request):
                 logger.info('Password Does not match')
                 context1['pswderr'] = 'Password Does not match'
 
-
     next_loc = request.GET.get('next', '')
     context1['sign_text'] = "Register"
     context1['invite'] = get_item_from_url(next_loc, 'invite')
