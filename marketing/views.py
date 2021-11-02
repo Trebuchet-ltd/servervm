@@ -3,8 +3,8 @@ from .serializers import GetVmPlanSerializer, TransactionSerializer, MarketingMe
 from .models import VmPlan, Transaction, MarketingMember
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
-from home.extra_functions import handle_payment, verify_signature, get_payment_link
-
+from home.extra_functions import handle_payment, verify_signature, get_payment_link, calculate_amount
+from rest_framework.views import APIView
 import servervm.settings as settings
 from rest_framework import status
 from authentication.permissions import IsOwner
@@ -41,7 +41,7 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
         if not (name or pem_file or plan or month or vm) and amount:
             logger.info(f"{request.user} requested to pay {amount} rupees (amount only) ")
             serializer.is_valid(raise_exception=True)
-            obj = serializer.save(user=request.user,amount_only=True)
+            obj = serializer.save(user=request.user, amount_only=True)
             get_payment_link(self.request.user, obj, amount=amount)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         logger.info(f"{request.user} requested for payment")
@@ -78,7 +78,7 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
                     pem = PemFile.objects.get(pk=pem_file)
                     print(f"found the pem file validating")
                     if pem.user != request.user:
-                        print(f"{request.user } does not match with {pem.user}")
+                        print(f"{request.user} does not match with {pem.user}")
                         return Response({"detail": "You are not authenticated to this key file "},
                                         status=status.HTTP_406_NOT_ACCEPTABLE)
                 except PemFile.DoesNotExist:
@@ -104,7 +104,7 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
             obj.plan = VirtualMachine.objects.get(pk=vm).plan
             logger.info(obj)
             obj.save()
-        get_payment_link(self.request.user,  obj)
+        get_payment_link(self.request.user, obj)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -136,3 +136,27 @@ def payment(request):
     else:
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
     return HttpResponseRedirect(settings.webhook_redirect_url)
+
+
+@api_view(["POST"])
+def apply_coupon( request):
+    """
+    {
+        "plan":2,
+        "coupon":"test",
+        "mouth":1
+    }
+    """
+    user = request.user
+    plan = request.data.get("plan")
+    coupon = request.data.get("coupon")
+    mouth = request.data.get("mouth")
+    try:
+        plan = VmPlan.objects.get(id=plan)
+    except VmPlan.DoesNotExist:
+        return Response({"detail": "invalid plan "}, status=status.HTTP_406_NOT_ACCEPTABLE)
+    if not mouth:
+        mouth = 1
+    amount = calculate_amount(user, coupon, plan, mouth)
+
+    return Response({"amount": amount}, status=status.HTTP_200_OK)

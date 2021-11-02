@@ -21,7 +21,7 @@ class VmPlan(models.Model):
 
 class MarketingMember(models.Model):
     user = models.OneToOneField(User, on_delete=models.PROTECT, related_name='marketing')
-    coupon = models.CharField(max_length=20)
+    coupon = models.CharField(max_length=20, unique=True)
     credits = models.FloatField(default=0)
     total_credits = models.FloatField(default=0)
     total_clients = models.IntegerField(default=0)
@@ -47,6 +47,7 @@ class Transaction(models.Model):
     date = models.DateField(auto_now_add=True)
     pem_file = models.ForeignKey('home.PemFile', on_delete=models.PROTECT,
                                  related_name="request", null=True, blank=True)
+    coupon = models.CharField(max_length=25)
     payment_link = models.CharField(max_length=40, default='')
     amount_only = models.BooleanField(default=0)
 

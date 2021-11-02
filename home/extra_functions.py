@@ -15,7 +15,8 @@ import hashlib
 import string
 from .models import VirtualMachine
 from marketing.models import Transaction
-from datetime import timedelta,date
+from datetime import timedelta, date
+from marketing.models import MarketingMember
 
 logger = logging.getLogger("home")
 
@@ -211,6 +212,28 @@ def create_new_unique_id():
     return str(unique_id)
 
 
+def calculate_amount(user, coupon, plan, month):
+    mark_logger.info("calculating amount ")
+    amount = plan.amount * month
+    mark_logger.info(f"calculated amount = {amount}")
+    email = user.email
+    if email.lower().endswith("@ug.cusat.ac.in"):
+        mark_logger.info("user is cusat student")
+        amount *= (100 - settings.cusat_discount) / 100
+        mark_logger.info(f"reduced amount to {amount}")
+    if coupon:
+        mark_logger.info(f"user requested to add coupon {coupon}")
+        try:
+            MarketingMember.objects.get(coupon=coupon)
+            mark_logger.info(f"found coupon")
+            amount *= (100 - settings.marketing_discount) / 100
+        except MarketingMember.DoesNotExist:
+            mark_logger.info("not found coupon")
+            pass
+    mark_logger.info(f"total amount is {amount}")
+    return amount
+
+
 def get_payment_link(user, vm_request, amount=0):
     """
     This Function returns thr payment url for that particular checkout
@@ -225,7 +248,7 @@ def get_payment_link(user, vm_request, amount=0):
     if amount:
         amount = amount
     else:
-        amount = vm_request.month * vm_request.plan.amount
+        amount = calculate_amount(user, vm_request.coupon, vm_request.plan, vm_request.month)
     vm_request.amount = amount
     vm_request.save()
     mark_logger.info(f"created transaction details object for {user}")
@@ -325,6 +348,3 @@ def handle_payment(transaction_id):
         current_vm.storage = vm_plan.storage
         current_vm.save()
         threading.Thread(target=update_vm, args=(current_vm, vm_plan.memory, vm_plan.storage)).start()
-
-
-

@@ -10,7 +10,9 @@ router.register(r'request', views.TransactionAPiViewSet)
 
 router.register(r'marketing', views.MarketingMemberViewSet)
 
+
 urlpatterns = [
     path(r'', include(router.urls)),
-    path(r'payment/', views.payment)
+    path(r'payment/', views.payment),
+    path(r'apply_coupon/', views.apply_coupon),
 ]

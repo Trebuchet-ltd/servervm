@@ -370,3 +370,7 @@ LOGGING = {
         },
     }
 }
+
+cusat_discount = 20
+marketing_discount = 20
+
