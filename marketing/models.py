@@ -48,6 +48,7 @@ class Transaction(models.Model):
     pem_file = models.ForeignKey('home.PemFile', on_delete=models.PROTECT,
                                  related_name="request", null=True, blank=True)
     payment_link = models.CharField(max_length=40, default='')
+    amount_only = models.BooleanField(default=0)
 
     def __str__(self):
         return f"{self.user} "

@@ -1,11 +1,7 @@
-
-# import django_filters
-# from django.http import FileResponse
-# from rest_framework.decorators import action
 import logging
 from .serializers import GetVmPlanSerializer, TransactionSerializer, MarketingMemberSerializer
 from .models import VmPlan, Transaction, MarketingMember
-from rest_framework import viewsets, filters, permissions
+from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from home.extra_functions import handle_payment, verify_signature, get_payment_link
 
@@ -28,23 +24,32 @@ class VmPlanViewSet(viewsets.ModelViewSet):
 class TransactionAPiViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
     queryset = Transaction.objects.all()
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
+    permission_classes = [IsOwner]
     http_method_names = ['get', 'post']
 
     def get_queryset(self):
         return Transaction.objects.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
-        name = request.data['name']
-        plan = request.data['plan']
-        vm = request.data['vm']
-        pem_file = request.data["pem_file"]
+        name = request.data.get("name")
+        plan = request.data.get('plan')
+        vm = request.data.get('vm')
+        month = request.data.get("month")
+        amount = request.data.get("amount")
+        pem_file = request.data.get("pem_file")
+        serializer = self.get_serializer(data=request.data)
+        if not (name or pem_file or plan or month or vm) and amount:
+            logger.info(f"{request.user} requested to pay {amount} rupees (amount only) ")
+            serializer.is_valid(raise_exception=True)
+            obj = serializer.save(user=request.user,amount_only=True)
+            get_payment_link(self.request.user, obj, amount=amount)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         logger.info(f"{request.user} requested for payment")
+
         if vm:
             try:
                 vm_obj = VirtualMachine.objects.get(pk=vm)
-                logger.info(f"{request.user} seleceted {vm_obj}")
+                logger.info(f"{request.user} selected {vm_obj}")
 
                 if vm_obj.user != request.user:
                     logger.info("user is not authenticated for this vm")
@@ -56,9 +61,8 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
                 return Response({"detail": "Virtual machine does not exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         elif not plan:
             logger.info("plan is not selected")
-            return  Response({"detail": "plan is required"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response({"detail": "plan is required"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            logger.info("user not provided vm id ")
             logger.info("user not provided vm id ")
             if not name:
                 logger.info("name is not provided")
@@ -80,14 +84,25 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
                 except PemFile.DoesNotExist:
                     print(f"pem file is not valid one")
                     return Response({"detail": "key file does not exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            if plan:
+                try:
+                    vm_pln = VmPlan.objects.get(pk=plan)
+                    vm_obj = VirtualMachine.objects.get(pk=vm)
+                    if vm_pln.vcpus < vm_obj.vcpus:
+                        logger.info("user tried to downgrade the plan")
+                        return Response({"detail": "virtual machine plan downgrading is not allowed "},
+                                        status=status.HTTP_406_NOT_ACCEPTABLE)
+                except VmPlan.DoesNotExist:
+                    logger.info("user is not authenticated for this vm")
+                    return Response({"detail": "Selected plan does not exist"},
+                                    status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         obj = serializer.save(user=request.user)
         logger.debug(obj)
         if vm and not plan:
             obj.plan = VirtualMachine.objects.get(pk=vm).plan
-            logger.warning(obj)
+            logger.info(obj)
             obj.save()
         get_payment_link(self.request.user,  obj)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -96,13 +111,14 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
 class MarketingMemberViewSet(viewsets.ModelViewSet):
     serializer_class = MarketingMemberSerializer
     queryset = MarketingMember.objects.all()
-    permission_classes = [IsOwner,permissions.IsAuthenticated]
+    permission_classes = [IsOwner, permissions.IsAuthenticated]
     http_method_names = ['get', "post"]
 
     def create(self, request, *args, **kwargs):
         try:
             MarketingMember.objects.get(user=self.request.user)
-            return Response({"detail": "user has already created marketing account"},status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response({"detail": "user has already created marketing account"},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
         except MarketingMember.DoesNotExist:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)

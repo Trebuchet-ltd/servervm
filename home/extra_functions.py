@@ -211,7 +211,7 @@ def create_new_unique_id():
     return str(unique_id)
 
 
-def get_payment_link(user, vm_request):
+def get_payment_link(user, vm_request, amount=0):
     """
     This Function returns thr payment url for that particular checkout
     Returns a list with payment link and payment id created by razorpay
@@ -222,7 +222,10 @@ def get_payment_link(user, vm_request):
     key_id = settings.razorpay_key_id
     transaction_id = create_new_unique_id()
     vm_request.transaction_id = transaction_id
-    amount = vm_request.month * vm_request.plan.amount
+    if amount:
+        amount = amount
+    else:
+        amount = vm_request.month * vm_request.plan.amount
     vm_request.amount = amount
     vm_request.save()
     mark_logger.info(f"created transaction details object for {user}")
@@ -289,8 +292,9 @@ def handle_payment(transaction_id):
     mark_logger.info(f"added {vm_request.amount} credits to user")
     token.save()
     mark_logger.info(f"current credit is {token.credits}")
-
-    if not vm_request.vm:
+    if vm_request.amount_only:
+        mark_logger.info("only added credits")
+    elif not vm_request.vm:
         vm_plan = vm_request.plan
 
         vm = VirtualMachine.objects.create(
