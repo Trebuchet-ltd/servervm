@@ -27,10 +27,11 @@ class MarketingMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = MarketingMember
 
-        fields = ['id', "user", "coupon", "credits", "total_credits", "total_clients", "total_active_clients"]
+        fields = ['id', "user", "coupon", "credits", "total_credits",
+                  "total_clients", "total_active_clients", "phone_number", "upi_id"
+                  ]
         extra_kwargs = {
             'user': {'read_only': True},
-            'coupon': {'read_only': True},
             'credits': {'read_only': True},
             'total_credits': {'read_only': True},
             'total_clients': {'read_only': True},

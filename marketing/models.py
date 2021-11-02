@@ -20,12 +20,17 @@ class VmPlan(models.Model):
 
 
 class MarketingMember(models.Model):
-    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='marketing', blank=True, null=True)
+    user = models.OneToOneField(User, on_delete=models.PROTECT, related_name='marketing')
     coupon = models.CharField(max_length=20)
     credits = models.FloatField(default=0)
     total_credits = models.FloatField(default=0)
     total_clients = models.IntegerField(default=0)
     total_active_clients = models.IntegerField(default=0)
+    phone_number = models.CharField(max_length=15)
+    upi_id = models.CharField(max_length=20)
+
+    def __str__(self):
+        return self.user.username
 
 
 class Transaction(models.Model):

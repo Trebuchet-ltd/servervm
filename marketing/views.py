@@ -96,31 +96,24 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
 class MarketingMemberViewSet(viewsets.ModelViewSet):
     serializer_class = MarketingMemberSerializer
     queryset = MarketingMember.objects.all()
-    permission_classes = [IsOwner]
-    http_method_names = ['get']
+    permission_classes = [IsOwner,permissions.IsAuthenticated]
+    http_method_names = ['get', "post"]
 
-    def get_queryset(self):
-        if self.request.user.marketing.exists():
-            return MarketingMember.objects.get(user=self.request.user)
-        return MarketingMember.objects.none()
+    def create(self, request, *args, **kwargs):
+        try:
+            MarketingMember.objects.get(user=self.request.user)
+            return Response({"detail": "user has already created marketing account"},status=status.HTTP_406_NOT_ACCEPTABLE)
+        except MarketingMember.DoesNotExist:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 @api_view(["GET"])
 def payment(request):
     print(request)
     logger.info("Webhook from razorpay called ...")
-    if verify_signature(request):
-        transaction_id = request.GET["razorpay_payment_link_reference_id"]
-        handle_payment(transaction_id)
-    else:
-        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-    return HttpResponseRedirect(settings.webhook_redirect_url)
-
-
-@api_view(["GET"])
-def checkout(request):
-    print(request)
-    logger.info("user requested to checkout")
     if verify_signature(request):
         transaction_id = request.GET["razorpay_payment_link_reference_id"]
         handle_payment(transaction_id)

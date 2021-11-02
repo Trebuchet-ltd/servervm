@@ -19,27 +19,34 @@ from authentication.permissions import IsOwner
 class VmViewSet(viewsets.ModelViewSet):
     serializer_class = VirtualMachineSerializer
     queryset = VirtualMachine.objects.all()
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ['get', 'delete', 'post']
     filterset_fields = ['active', ]
     filter_backends = [filters.SearchFilter, django_filters.rest_framework.DjangoFilterBackend]
     search_fields = ['code', 'name']
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsOwner]
 
     def get_queryset(self):
+        if self.request.user.is_staff:
+            return VirtualMachine.objects.all()
         return VirtualMachine.objects.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
-        plan = self.request.data["plan"]
-        vm_plan = VmPlan.objects.get(id=plan)
-        instance = serializer.save(
-            user=self.request.user,
-            memory=vm_plan.memory,
-            vcpus=vm_plan.vcpus,
-            storage=vm_plan.storage,
-            os=vm_plan.os
-        )
+    def create(self, request, *args, **kwarg):
 
-        threading.Thread(target=create_vm, args=(instance,)).start()
+        if request.user.is_staff:
+            plan = self.request.data["plan"]
+            vm_plan = VmPlan.objects.get(id=plan)
+            serializer = self.get_serializer(data=request.data)
+            instance = serializer.save(
+                user=self.request.user,
+                memory=vm_plan.memory,
+                vcpus=vm_plan.vcpus,
+                storage=vm_plan.storage,
+                os=vm_plan.os
+            )
+
+            threading.Thread(target=create_vm, args=(instance,)).start()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response({"detail":"you are not allowed to create vm through this end point"})
 
     def perform_destroy(self, instance):
         instance.maintenance = True
@@ -47,26 +54,28 @@ class VmViewSet(viewsets.ModelViewSet):
         threading.Thread(target=delete_vm, args=(instance,)).start()
 
     def update(self, request, *args, **kwargs):
-        current_data = VirtualMachine.objects.get(id=self.request.data["id"])
-        plan = self.request.data["plan"]
-        vm_plan = VmPlan.objects.get(id=plan)
-        current_data.maintenance = True
+        if request.user.is_staff:
+            current_data = VirtualMachine.objects.get(id=self.request.data["id"])
+            plan = self.request.data["plan"]
+            vm_plan = VmPlan.objects.get(id=plan)
+            current_data.maintenance = True
 
-        if vm_plan.id != current_data.plan:
-            current_data.memory = vm_plan.memory
-            current_data.vcpus = vm_plan.vcpus
-            current_data.storage = vm_plan.storage
-            current_data.os = vm_plan.os
+            if vm_plan.id != current_data.plan:
+                current_data.memory = vm_plan.memory
+                current_data.vcpus = vm_plan.vcpus
+                current_data.storage = vm_plan.storage
+                current_data.os = vm_plan.os
 
-        current_data.save()
-        memory = current_data.memory
-        storage = current_data.storage
-        new_storage = self.request.data["storage"]
-        print(f"{memory = }, {new_storage = } {storage = }")
-        res = super().update(self.request)
-        current_data = VirtualMachine.objects.get(id=self.request.data["id"])
-        threading.Thread(target=update_vm, args=(current_data, memory, storage)).start()
-        return res
+            current_data.save()
+            memory = current_data.memory
+            storage = current_data.storage
+            new_storage = self.request.data["storage"]
+            print(f"{memory = }, {new_storage = } {storage = }")
+            res = super().update(self.request)
+            current_data = VirtualMachine.objects.get(id=self.request.data["id"])
+            threading.Thread(target=update_vm, args=(current_data, memory, storage)).start()
+            return res
+        return Response({"detail" : "you are not allowed to update vm through this end point"})
 
     @action(methods=['post'], detail=True, permission_classes=[IsOwner])
     def start(self, request, pk):
@@ -171,17 +180,6 @@ class VmViewSet(viewsets.ModelViewSet):
         else:
             return Response(status=status.HTTP_202_ACCEPTED)
 
-    # @action(methods=["post"],detail=True,permission_classes=[IsOwner])
-    # def renew_payment(self, request, pk):
-    #     month = request.data["month"]
-    #     vm = VirtualMachine.objects.get(pk=pk)
-    #     vm_req = Transaction.objects.create(user=request.user,vm=vm,name=vm.name,plan=vm.plan,month=month,pem_file=vm.pem_file)
-    #     payment_url = get_payment_link(request.user, vm_req)
-    #     if payment_url:
-    #         return Response({"payment_url": payment_url},status=status.HTTP_202_ACCEPTED)
-    #     return Response({"detail": "payment link creation failed"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-    #
-
 
 class PemFileViewSet(viewsets.ModelViewSet):
     """
@@ -196,7 +194,6 @@ class PemFileViewSet(viewsets.ModelViewSet):
         return PemFile.objects.filter(user=self.request.user.id)
 
     def perform_create(self, serializer):
-        name = self.request.data['name']
         os.makedirs(f"/home/ubuntu/servervm/media/{self.request.user}", exist_ok=True)
         instance = serializer.save(user=self.request.user)
         instance.file_path = f"/home/ubuntu/servervm/media/{self.request.user}/{instance.code}"
