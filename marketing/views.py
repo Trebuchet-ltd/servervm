@@ -41,7 +41,6 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
         vm = request.data['vm']
         pem_file = request.data["pem_file"]
         logger.info(f"{request.user} requested for payment")
-        vm_obj = False
         if vm:
             try:
                 vm_obj = VirtualMachine.objects.get(pk=vm)
@@ -54,18 +53,22 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
 
             except VirtualMachine.DoesNotExist:
                 logger.info("invalid vm id")
-                Response({"detail": "Virtual machine does not exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response({"detail": "Virtual machine does not exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        elif not plan:
+            logger.info("plan is not selected")
+            return  Response({"detail": "plan is required"}, status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
+            logger.info("user not provided vm id ")
             logger.info("user not provided vm id ")
             if not name:
                 logger.info("name is not provided")
-                Response({"detail": "name is required"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response({"detail": "name is required"}, status=status.HTTP_406_NOT_ACCEPTABLE)
             elif not plan:
                 logger.info("plan is not selected")
-                Response({"detail": "plan is required"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response({"detail": "plan is required"}, status=status.HTTP_406_NOT_ACCEPTABLE)
             elif not pem_file:
                 logger.info("pem file is not provided")
-                Response({"detail": "key file is required"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response({"detail": "key file is required"}, status=status.HTTP_406_NOT_ACCEPTABLE)
             else:
                 try:
                     pem = PemFile.objects.get(pk=pem_file)
@@ -76,21 +79,18 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
                                         status=status.HTTP_406_NOT_ACCEPTABLE)
                 except PemFile.DoesNotExist:
                     print(f"pem file is not valid one")
-                    Response({"detail": "key file does not exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                    return Response({"detail": "key file does not exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # if vm:
-        #     vm_obj = VirtualMachine.objects.get(id=vm)
-        #     # Transaction.objects.create(user=request.user,name= )
-        #
-        #     # logger.debug(obj)
-        # else:
-        obj = serializer.save()
-        #     logger.debug(obj)
-
-        get_payment_link(self.request.user,obj)
-        return Response(status=221)
+        obj = serializer.save(user=request.user)
+        logger.debug(obj)
+        if vm and not plan:
+            obj.plan = VirtualMachine.objects.get(pk=vm).plan
+            logger.warning(obj)
+            obj.save()
+        get_payment_link(self.request.user,  obj)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class MarketingMemberViewSet(viewsets.ModelViewSet):

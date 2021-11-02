@@ -44,3 +44,5 @@ class Transaction(models.Model):
                                  related_name="request", null=True, blank=True)
     payment_link = models.CharField(max_length=40, default='')
 
+    def __str__(self):
+        return f"{self.user} "

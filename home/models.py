@@ -67,7 +67,6 @@ class VirtualMachine(models.Model):
     plan = models.ForeignKey(VmPlan, related_name='vm', on_delete=models.RESTRICT)
     expiry_date = models.DateField(blank=True, null=True)
 
-
     def __str__(self):
         return self.name
 

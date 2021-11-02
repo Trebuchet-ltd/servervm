@@ -19,6 +19,8 @@ from datetime import timedelta,date
 
 logger = logging.getLogger("home")
 
+mark_logger = logging.getLogger("marketing")
+
 
 def set_storage(instance):
     """
@@ -214,15 +216,16 @@ def get_payment_link(user, vm_request):
     This Function returns thr payment url for that particular checkout
     Returns a list with payment link and payment id created by razorpay
     """
-    logger.info(f"{user} Requesting to get payment link ")
+    mark_logger.info(f"{user} Requesting to get payment link ")
     key_secret = settings.razorpay_key_secret
     call_back_url = settings.webhook_call_back_url
     key_id = settings.razorpay_key_id
     transaction_id = create_new_unique_id()
     vm_request.transaction_id = transaction_id
     amount = vm_request.month * vm_request.plan.amount
+    vm_request.amount = amount
     vm_request.save()
-    logger.info(f"created transaction details object for {user}")
+    mark_logger.info(f"created transaction details object for {user}")
     amount *= 100  # converting rupees to paisa
 
     try:
@@ -256,28 +259,37 @@ def get_payment_link(user, vm_request):
                             headers={'Content-type': 'application/json'},
                             auth=HTTPBasicAuth(key_id, key_secret)).json()
         try:
-            logger.info(f"Razorpay response object {res} ")
+            mark_logger.info(f"Razorpay response object {res} ")
             vm_request.payment_id = res.get("id")
-            logger.info(f" Transaction id {res.get('id')} ,  status = {res.get('status')}")
+            mark_logger.info(f" Transaction id {res.get('id')} ,  status = {res.get('status')}")
             vm_request.payment_status = res.get("status")
             payment_url = res.get('short_url')
             vm_request.payment_link = payment_url
-            logger.info(f"now created transaction details is {vm_request}")
+            mark_logger.info(f"now created transaction details is {vm_request}")
 
-            logger.info(f"payment url - {payment_url}")
+            mark_logger.info(f"payment url - {payment_url}")
             vm_request.save()
             return payment_url
 
         except KeyError:
-            logger.warning(f"payment link creation failed ... {res} ")
+            mark_logger.warning(f"payment link creation failed ... {res} ")
             return False
     except Exception as e:
-        logger.warning(e)
+        mark_logger.warning(e)
         return False
 
 
 def handle_payment(transaction_id):
     vm_request = Transaction.objects.get(transaction_id=transaction_id)
+
+    user = vm_request.user
+    mark_logger.info(f"handling payment of user {user.username}")
+    token = user.tokens
+    token.credits += vm_request.amount
+    mark_logger.info(f"added {vm_request.amount} credits to user")
+    token.save()
+    mark_logger.info(f"current credit is {token.credits}")
+
     if not vm_request.vm:
         vm_plan = vm_request.plan
 
@@ -294,6 +306,7 @@ def handle_payment(transaction_id):
         )
         vm_request.vm = vm
         vm_request.save()
+
         threading.Thread(target=create_vm, args=(vm,)).start()
     elif vm_request.vm and vm_request.plan == vm_request.vm.plan:
         vm = vm_request.vm

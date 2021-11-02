@@ -7,7 +7,7 @@
 ./home/server_setup
 /home/template_changes.txt
 
-./logs
+./logs/*
 ./media
 ./err.html
 ./home/template funs
