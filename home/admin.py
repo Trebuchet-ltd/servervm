@@ -12,6 +12,7 @@ class VmAdmin(admin.ModelAdmin):
 
     list_filter = ('active', "plan",)
     actions = ['start', 'stop', 'restart']
+    search_fields = ['code', 'name']
 
     def start(self, request, queryset):
         for i in queryset:
