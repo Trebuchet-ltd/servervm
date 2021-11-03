@@ -147,7 +147,9 @@ class Tokens(models.Model):
     invite_token = models.CharField(max_length=10, blank=True, null=True)
     phone_number = models.CharField(max_length=12, default="")
     credits = models.FloatField(default=0)
-    # profile = models.ImageField()
+
+    def is_student(self):
+        return self.user.email.lower().endswith("@ug.cusat.ac.in")
 
     def __str__(self):
         return f"{self.user} "

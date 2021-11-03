@@ -146,23 +146,14 @@ def payment(request):
 
 @api_view(["POST"])
 def apply_coupon( request):
-    """
-    {
-        "plan":2,
-        "coupon":"test",
-        "mouth":1
-    }
-    """
-    user = request.user
-    plan = request.data.get("plan")
     coupon = request.data.get("coupon")
-    mouth = request.data.get("mouth")
-    try:
-        plan = VmPlan.objects.get(id=plan)
-    except VmPlan.DoesNotExist:
-        return Response({"detail": "invalid plan "}, status=status.HTTP_406_NOT_ACCEPTABLE)
-    if not mouth:
-        mouth = 1
-    amount = calculate_amount(user, coupon, plan, mouth)
-
-    return Response({"amount": amount}, status=status.HTTP_200_OK)
+    discount = 0
+    if coupon:
+        try:
+            MarketingMember.objects.get(coupon__iexact=coupon)
+            logger.info(f"found coupon")
+            discount = 50
+        except MarketingMember.DoesNotExist:
+            return Response({"detail": "invalid coupon"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+    logger.info(f"total amount is {discount}")
+    return Response({"discount": discount}, status=status.HTTP_200_OK)

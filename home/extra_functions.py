@@ -216,17 +216,15 @@ def calculate_amount(user, coupon, plan, month):
     mark_logger.info("calculating amount ")
     amount = plan.amount * month
     mark_logger.info(f"calculated amount = {amount}")
-    email = user.email
-    if email.lower().endswith("@ug.cusat.ac.in"):
-        mark_logger.info("user is cusat student")
-        amount *= (100 - settings.cusat_discount) / 100
+    if user.tokens.is_student():
+        amount -= 30
         mark_logger.info(f"reduced amount to {amount}")
     if coupon:
         mark_logger.info(f"user requested to add coupon {coupon}")
         try:
             MarketingMember.objects.get(coupon=coupon)
             mark_logger.info(f"found coupon")
-            amount *= (100 - settings.marketing_discount) / 100
+            amount -= 50
         except MarketingMember.DoesNotExist:
             mark_logger.info("not found coupon")
             pass
@@ -315,10 +313,17 @@ def handle_payment(transaction_id):
     mark_logger.info(f"added {vm_request.amount} credits to user")
     token.save()
     mark_logger.info(f"current credit is {token.credits}")
+
     if vm_request.amount_only:
         mark_logger.info("only added credits")
     elif not vm_request.vm:
         vm_plan = vm_request.plan
+        member = None
+        if vm_request.coupon:
+            try:
+                member = MarketingMember.objects.get(coupon__iexact=vm_request.coupon)
+            except MarketingMember.DoesNotExist:
+                pass
 
         vm = VirtualMachine.objects.create(
             user=vm_request.user,
@@ -329,11 +334,11 @@ def handle_payment(transaction_id):
             os=vm_plan.os,
             pem_file=vm_request.pem_file,
             plan=vm_plan,
-            expiry_date=date.today() + timedelta(days=vm_request.month * 30)
+            expiry_date=date.today() + timedelta(days=vm_request.month * 30),
+            invited_by=member
         )
         vm_request.vm = vm
         vm_request.save()
-
         threading.Thread(target=create_vm, args=(vm,)).start()
     elif vm_request.vm and vm_request.plan == vm_request.vm.plan:
         vm = vm_request.vm
