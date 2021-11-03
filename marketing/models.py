@@ -13,6 +13,8 @@ class VmPlan(models.Model):
     os = models.CharField(max_length=20, choices=available_os)
     amount = models.FloatField(help_text='per month')
     image = models.ImageField(upload_to="pic",blank=True, null=True)
+    coupon_discount = models.FloatField(help_text='discount', default=0)
+    student_discount = models.FloatField(help_text='discount',  default=0)
 
     def __str__(self):
         return f"{self.os} / {self.memory} gb ram / {self.vcpus} vcpu / " \
@@ -47,9 +49,10 @@ class Transaction(models.Model):
     date = models.DateField(auto_now_add=True)
     pem_file = models.ForeignKey('home.PemFile', on_delete=models.PROTECT,
                                  related_name="request", null=True, blank=True)
-    coupon = models.CharField(max_length=25)
+    coupon = models.CharField(max_length=25,blank=True,null=True)
     payment_link = models.CharField(max_length=40, default='')
     amount_only = models.BooleanField(default=0)
+    invited_by = models.ForeignKey(MarketingMember, on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return f"{self.user} "

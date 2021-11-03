@@ -1,3 +1,4 @@
+import libvirt
 from django.db import models
 from django.contrib.auth.models import User
 # Create your models here.
@@ -66,15 +67,45 @@ class VirtualMachine(models.Model):
     maintenance = models.BooleanField(default=True)
     plan = models.ForeignKey(VmPlan, related_name='vm', on_delete=models.RESTRICT)
     expiry_date = models.DateField(blank=True, null=True)
+    invited_by = models.ForeignKey("marketing.MarketingMember", on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.name
 
     def start(self):
-        os.system(f"virsh start {self.code}")
+        if not self.maintenance:
+            conn = libvirt.open("qemu:///system")
+            try:
+                dom = conn.lookupByName(self.code)
+                if not dom.isActive():
+                    dom.create()
+                else:
+                    if not self.active:
+                        self.active = True
+                        self.save()
+            except Exception as e:
+                print(e)
+            self.active = True
+            self.save()
 
-    def shutdown(self):
-        os.system(f"virsh shutdown {self.code}")
+    def stop(self):
+        if not self.maintenance:
+            conn = libvirt.open("qemu:///system")
+            try:
+                dom = conn.lookupByName(vm.code)
+                try:
+                    dom.shutdown()
+                except Exception as e:
+                    print(e)
+                    if self.active:
+                        self.active = False
+                        self.save()
+            except Exception as e:
+                print(e)
+            self.active = False
+            self.save()
+        else:
+            pass
 
     def restart(self):
         os.system(f"virsh start {self.code}")

@@ -24,11 +24,14 @@ class VmPlanViewSet(viewsets.ModelViewSet):
 class TransactionAPiViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
     queryset = Transaction.objects.all()
-    permission_classes = [IsOwner]
+    permission_classes = [permissions.IsAuthenticated]
     http_method_names = ['get', 'post']
 
     def get_queryset(self):
-        return Transaction.objects.filter(user=self.request.user)
+        try:
+            return Transaction.objects.filter(user=self.request.user)
+        except Transaction.DoesNotExist:
+            return Transaction.objects.none()
 
     def create(self, request, *args, **kwargs):
         name = request.data.get("name")
@@ -36,6 +39,7 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
         vm = request.data.get('vm')
         month = request.data.get("month")
         amount = request.data.get("amount")
+        coupon = request.data.get("coupon")
         pem_file = request.data.get("pem_file")
         serializer = self.get_serializer(data=request.data)
         if not (name or pem_file or plan or month or vm) and amount:
@@ -55,7 +59,6 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
                     logger.info("user is not authenticated for this vm")
                     return Response({"detail": "You are not authenticated to this virtual machine "},
                                     status=status.HTTP_406_NOT_ACCEPTABLE)
-
             except VirtualMachine.DoesNotExist:
                 logger.info("invalid vm id")
                 return Response({"detail": "Virtual machine does not exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -84,14 +87,17 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
                 except PemFile.DoesNotExist:
                     print(f"pem file is not valid one")
                     return Response({"detail": "key file does not exist"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            logger.info("checking plan")
             if plan:
                 try:
                     vm_pln = VmPlan.objects.get(pk=plan)
-                    vm_obj = VirtualMachine.objects.get(pk=vm)
-                    if vm_pln.vcpus < vm_obj.vcpus:
-                        logger.info("user tried to downgrade the plan")
-                        return Response({"detail": "virtual machine plan downgrading is not allowed "},
-                                        status=status.HTTP_406_NOT_ACCEPTABLE)
+                    if vm:
+                        vm_obj = VirtualMachine.objects.get(pk=vm)
+                        if vm_pln.vcpus < vm_obj.vcpus:
+                            logger.info("user tried to downgrade the plan")
+                            return Response({"detail": "virtual machine plan downgrading is not allowed "},
+                                            status=status.HTTP_406_NOT_ACCEPTABLE)
+
                 except VmPlan.DoesNotExist:
                     logger.info("user is not authenticated for this vm")
                     return Response({"detail": "Selected plan does not exist"},

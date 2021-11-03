@@ -258,7 +258,7 @@ def get_payment_link(user, vm_request, amount=0):
         url = 'https://api.razorpay.com/v1/payment_links'
 
         data = {
-            "amount": amount,
+            "amount": int(amount),
             "currency": "INR",
             "callback_url": call_back_url,
             "callback_method": "get",

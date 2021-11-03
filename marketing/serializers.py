@@ -7,7 +7,7 @@ class GetVmPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = VmPlan
         fields = [
-            'id', 'name', 'memory', 'storage', 'amount', 'os', 'vcpus', 'image'
+            'id', 'name', 'memory', 'storage', 'amount', 'os', 'vcpus', 'image', 'student_discount'
         ]
 
 
@@ -15,7 +15,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['id', 'name',"amount",'vm', 'pem_file', 'plan', 'month', 'payment_status', 'date',
-                  'payment_id', 'payment_link', 'coupon']
+                  'payment_id', 'payment_link', 'coupon',]
         extra_kwargs = {
             'payment_status': {'read_only': True},
             'date': {'read_only': True},
