@@ -52,9 +52,8 @@ class VirtualMachine(models.Model):
     code = models.CharField(max_length=50, default=create_new_code, blank=True, null=True)
     name = models.CharField(max_length=25)
     active = models.BooleanField(default=0)
-    memory = models.PositiveIntegerField(default=4, help_text="in GB",
-                                         validators=[MinValueValidator(1), MaxValueValidator(16)])
-    vcpus = models.PositiveIntegerField(default=2, validators=[MinValueValidator(1), MaxValueValidator(20)])
+    memory = models.PositiveIntegerField(default=4, help_text="in GB")
+    vcpus = models.PositiveIntegerField(default=2)
     storage = models.PositiveIntegerField(default=20, help_text="in GB",
                                           validators=[MinValueValidator(5),])
 
@@ -101,14 +100,22 @@ class VirtualMachine(models.Model):
                         self.active = False
                         self.save()
             except Exception as e:
-                print(e)
+                pass
             self.active = False
             self.save()
         else:
             pass
 
     def restart(self):
-        os.system(f"virsh start {self.code}")
+
+        if not self.maintenance:
+            conn = libvirt.open("qemu:///system")
+            try:
+                dom = conn.lookupByName(self.code)
+                if dom.isActive():
+                    dom.reboot()
+            except Exception as e:
+                pass
 
 
 class SystemDetails(models.Model):

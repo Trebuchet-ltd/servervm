@@ -1,4 +1,8 @@
 import logging
+import threading
+
+from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives
+
 from .serializers import GetVmPlanSerializer, TransactionSerializer, MarketingMemberSerializer
 from .models import VmPlan, Transaction, MarketingMember
 from rest_framework import viewsets, permissions
@@ -143,6 +147,26 @@ def payment(request):
     else:
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
     return HttpResponseRedirect(settings.webhook_redirect_url)
+
+
+# def mail():
+#     try:
+#         logger.info("sending mail")
+#         subject, from_email, to = 'hello', 'sunithvs2002@gmail.com', 'sunithvazhenkada@gmail.com'
+#         text_content = 'This is an important message.'
+#         html_content = '<p>This is an <strong>important</strong> message.</p>'
+#         msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
+#         msg.attach_alternative(html_content, "text/html")
+#         msg.send()
+#         logger.info("mail sending completed ")
+#     except Exception as e:
+#         logger.warning(e)
+
+#
+# @api_view(["GET"])
+# def sendmail(request):
+#     threading.Thread(target=mail).start()
+#     return Response(status=202)
 
 
 @api_view(["POST"])

@@ -14,6 +14,8 @@ class PemFileSerializer(serializers.ModelSerializer):
 
 
 class VirtualMachineSerializer(serializers.ModelSerializer):
+    pem_file = serializers.SerializerMethodField()
+    plan = serializers.SerializerMethodField()
 
     class Meta:
         model = VirtualMachine
@@ -32,6 +34,12 @@ class VirtualMachineSerializer(serializers.ModelSerializer):
             "mac_address": {'read_only': True},
             "active": {'read_only': True},
         }
+
+    def get_plan(self,obj):
+        return obj.plan.name
+
+    def get_pem_file(self, obj):
+        return obj.pem_file.name
 
 
 class GetTokensSerializer(serializers.ModelSerializer):

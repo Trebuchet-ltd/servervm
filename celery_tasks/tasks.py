@@ -4,6 +4,7 @@ from home.models import SystemDetails
 import psutil
 from home.models import VirtualMachine
 import libvirt
+from django.core.mail import send_mail
 
 from celery.utils.log import get_task_logger
 

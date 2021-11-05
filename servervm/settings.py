@@ -46,6 +46,12 @@ CELERY_TIMEZONE = "UTC"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
+# email details
+
+EMAIL_PORT = 465
+EMAIL_HOST = 'ssmtp.yandex.com'
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+EMAIL_HOST_USER = os.environ.get('EMAIL_ID')
 
 INSTALLED_APPS = [
     'corsheaders',

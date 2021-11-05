@@ -118,13 +118,12 @@ def create_vm(instance):
 
 
 def delete_vm(instance):
-    print("deleting vm")
-
+    logger.info(f"deleting vm {instance.code}")
     conn = libvirt.open("qemu:///system")
     try:
         dom = conn.lookupByName(instance.code)
         if dom.isActive():
-            os.system(f"virsh shutdown {instance.code}")
+            os.system(f"virsh destroy {instance.code}")
             time.sleep(10)
         os.system(f"virsh undefine {instance.code} --remove-all-storage")
     except Exception as e:
@@ -318,7 +317,7 @@ def handle_payment(transaction_id):
         mark_logger.info("only added credits")
     elif not vm_request.vm:
         vm_plan = vm_request.plan
-        member = None
+        member = MarketingMember.objects.none()
         if vm_request.coupon:
             try:
                 member = MarketingMember.objects.get(coupon__iexact=vm_request.coupon)
