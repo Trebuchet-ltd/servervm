@@ -56,7 +56,6 @@ class VirtualMachine(models.Model):
     vcpus = models.PositiveIntegerField(default=2)
     storage = models.PositiveIntegerField(default=20, help_text="in GB",
                                           validators=[MinValueValidator(5),])
-
     mac_address = models.CharField(max_length=50, blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     os = models.CharField(max_length=20, choices=available_os)
@@ -67,6 +66,7 @@ class VirtualMachine(models.Model):
     plan = models.ForeignKey(VmPlan, related_name='vm', on_delete=models.RESTRICT)
     expiry_date = models.DateField(blank=True, null=True)
     invited_by = models.ForeignKey("marketing.MarketingMember", on_delete=models.SET_NULL, blank=True, null=True)
+    staff_status = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

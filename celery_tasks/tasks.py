@@ -55,3 +55,19 @@ def monitor_vm():
         except Exception as e:
             logger.warning(e)
 
+
+# @app.task
+# def reduce_credits():
+#     vms = VirtualMachine.objects.filter(staff_status=False)
+#     conn = libvirt.open("qemu:///system")
+#     for vm in vms:
+#         try:
+#             dom = conn.lookupByName(vm.code)
+#             logger.info(f"vm {vm.code}/{vm.name} 's active status in database {vm.active} actually {dom.isActive()}")
+#             if vm.active and not dom.isActive():
+#                 logger.info(f"vm {vm.code}/{vm.name} is not on but it is active according to database ")
+#                 logger.info(f"vm {vm.code}/{vm.name} is starting  ")
+#                 os.system(f"virsh start {vm.code}")
+#                 logger.info(f"vm {vm.code}/{vm.name} is started  ")
+#         except Exception as e:
+#             logger.warning(e)

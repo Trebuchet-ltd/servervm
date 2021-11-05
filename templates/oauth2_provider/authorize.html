@@ -15,7 +15,7 @@
         {% if not error %}
              <form class="form-container d-flex flex-column justify-content-center items-center" id="authorizationForm" method="post">
                     <h2 class="main-head"> Choose an Account </h2>
-                    <h3  class="sub-head">to continue to <a class="signin-link" href="https://dreameat.in/" > dreameat.in </a></h3>
+                    <h3  class="sub-head">to continue to <a class="signin-link" href="https://console.tsp.trebuchet.one/" > TSP </a></h3>
                     {% csrf_token %}
                  {% for field in form %}
                     {% if field.is_hidden %}
@@ -37,7 +37,6 @@
                     </div>
                     <hr class="line">
                     <div class="select-account  ">
-
                         <div class=" d-flex flex-row">
 
                         <i class="far user-logo fa-user-circle"></i>

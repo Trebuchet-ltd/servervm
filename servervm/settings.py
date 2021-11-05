@@ -53,6 +53,8 @@ EMAIL_HOST = 'ssmtp.yandex.com'
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 EMAIL_HOST_USER = os.environ.get('EMAIL_ID')
 
+ASGI_APPLICATION = "servervm.asgi.application"
+
 INSTALLED_APPS = [
     'corsheaders',
     'django_celery_results',
@@ -72,6 +74,7 @@ INSTALLED_APPS = [
     'admin_honeypot',
     'log_viewer',
     'django_celery_beat',
+    'channels',
     'home',
     'auth_login',
     'marketing',
