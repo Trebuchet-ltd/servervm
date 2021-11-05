@@ -19,6 +19,7 @@ class VmPlanViewSet(viewsets.ModelViewSet):
     serializer_class = GetVmPlanSerializer
     queryset = VmPlan.objects.all()
     http_method_names = ['get']
+    permission_classes = [permissions.AllowAny]
 
 
 class TransactionAPiViewSet(viewsets.ModelViewSet):

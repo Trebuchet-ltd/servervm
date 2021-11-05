@@ -174,6 +174,7 @@ class VmViewSet(viewsets.ModelViewSet):
             if not vm.vpn_ip:
                 vm.vpn_ip = request.POST["vpn_ip"]
                 vm.virtual_mac = request.POST["virtual_mac"]
+                vm.active = True
                 vm.save()
         except VirtualMachine.DoesNotExist:
             return Response(status=status.HTTP_204_NO_CONTENT)

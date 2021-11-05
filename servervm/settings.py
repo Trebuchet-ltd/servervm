@@ -268,12 +268,11 @@ SWAGGER_SETTINGS = {
 }
 
 
-LOG_VIEWER_FILES = ['v2.log', 'home.log', 'default.log']
+LOG_VIEWER_FILES = ['v2.log', 'home.log', 'default.log','tasks.log', 'marketing']
 LOG_VIEWER_FILES_PATTERN = '*'
 LOG_VIEWER_FILES_DIR = os.path.join(BASE_DIR, 'logs')
 LOG_VIEWER_MAX_READ_LINES = 1000  # total log lines will be read
 LOG_VIEWER_PAGE_LENGTH = 25  # total log lines per-page
-# LOG_VIEWER_PATTERNS = [']OFNI[', ']GUBED[', ']GNINRAW[', ']RORRE[', ']LACITIRC[']
 LOG_VIEWER_PATTERNS = ['[INFO]', '[DEBUG]', '[WARNING]', '[ERROR]', '[CRITICAL]']
 # Optionally you can set the next variables in order to customize the admin:
 
@@ -371,6 +370,6 @@ LOGGING = {
     }
 }
 
-cusat_discount = 20
-marketing_discount = 20
+cusat_discount = 50
+marketing_discount = 30
 
