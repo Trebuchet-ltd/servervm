@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import VirtualMachine,PemFile,Tokens
+from .models import VirtualMachine, PemFile, Tokens
 
 
 class PemFileSerializer(serializers.ModelSerializer):
@@ -35,7 +35,7 @@ class VirtualMachineSerializer(serializers.ModelSerializer):
             "active": {'read_only': True},
         }
 
-    def get_plan(self,obj):
+    def get_plan(self, obj):
         return obj.plan.name
 
     def get_pem_file(self, obj):
@@ -44,10 +44,11 @@ class VirtualMachineSerializer(serializers.ModelSerializer):
 
 class GetTokensSerializer(serializers.ModelSerializer):
     is_student = serializers.SerializerMethodField()
+
     class Meta:
         model = Tokens
         fields = [
-            'user', 'private_token', 'invite_token', 'invited', 'points', 'phone_number','credits', 'is_student'
+            'user', 'private_token', 'invite_token', 'invited', 'points', 'phone_number', 'credits', 'is_student'
 
         ]
         extra_kwargs = {
@@ -61,4 +62,3 @@ class GetTokensSerializer(serializers.ModelSerializer):
 
     def get_is_student(self, obj):
         return obj.is_student()
-
