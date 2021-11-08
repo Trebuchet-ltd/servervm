@@ -165,9 +165,9 @@ def payment(request):
 #
 # @api_view(["GET"])
 # def sendmail(request):
-#     threading.Thread(target=mail).start()
-#     return Response(status=202)
-
+#     models.CeleryGroupResult
+#
+#     return Response()
 
 @api_view(["POST"])
 def apply_coupon( request):

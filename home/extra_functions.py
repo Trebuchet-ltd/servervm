@@ -18,6 +18,7 @@ from marketing.models import Transaction
 from datetime import timedelta, date
 from marketing.models import MarketingMember
 
+
 logger = logging.getLogger("home")
 
 mark_logger = logging.getLogger("marketing")
@@ -317,13 +318,12 @@ def handle_payment(transaction_id):
         mark_logger.info("only added credits")
     elif not vm_request.vm:
         vm_plan = vm_request.plan
-        member = MarketingMember.objects.none()
+        member = None
         if vm_request.coupon:
             try:
                 member = MarketingMember.objects.get(coupon__iexact=vm_request.coupon)
             except MarketingMember.DoesNotExist:
                 pass
-
         vm = VirtualMachine.objects.create(
             user=vm_request.user,
             name=vm_request.name,
