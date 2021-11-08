@@ -125,11 +125,10 @@ def delete_vm(instance):
         dom = conn.lookupByName(instance.code)
         if dom.isActive():
             os.system(f"virsh destroy {instance.code}")
-            time.sleep(10)
+            time.sleep(3)
         os.system(f"virsh undefine {instance.code} --remove-all-storage")
     except Exception as e:
         print(e)
-    instance.delete()
 
 
 def update_vm(instance, memory, storage):
@@ -338,7 +337,6 @@ def handle_payment(transaction_id):
         )
         vm_request.vm = vm
         vm_request.save()
-        threading.Thread(target=create_vm, args=(vm,)).start()
     elif vm_request.vm and vm_request.plan == vm_request.vm.plan:
         vm = vm_request.vm
         vm.expiry_date += timedelta(days=vm_request.month * 30)

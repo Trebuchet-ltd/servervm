@@ -26,6 +26,10 @@ class VmViewSet(viewsets.ModelViewSet):
     permission_classes = [IsOwner]
 
     def get_queryset(self):
+        try:
+            logger.info(self.request.user)
+        except Exception as e:
+            logger.info(e)
         if self.request.user.is_staff:
             return VirtualMachine.objects.all()
         return VirtualMachine.objects.filter(user=self.request.user)
@@ -43,15 +47,12 @@ class VmViewSet(viewsets.ModelViewSet):
                 storage=vm_plan.storage,
                 os=vm_plan.os
             )
-
-            threading.Thread(target=create_vm, args=(instance,)).start()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response({"detail":"you are not allowed to create vm through this end point"})
 
     def perform_destroy(self, instance):
         instance.maintenance = True
         instance.save()
-        threading.Thread(target=delete_vm, args=(instance,)).start()
 
     def update(self, request, *args, **kwargs):
         if request.user.is_staff:
@@ -95,10 +96,9 @@ class VmViewSet(viewsets.ModelViewSet):
                 print(e)
             vm.active = True
             vm.save()
-
             return Response("vm started")
         else:
-            return Response("vm is at some maintenance please wait ...")
+            return Response("vm is at some maintenance please wait ...", status=status.HTTP_406_NOT_ACCEPTABLE)
 
     @action(methods=['post'], detail=True,permission_classes=[IsOwner])
     def stop(self, request, pk):
