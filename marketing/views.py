@@ -116,6 +116,9 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
             logger.info(obj)
             obj.save()
         get_payment_link(self.request.user, obj)
+        if request.user.is_staff:
+            handle_payment(obj.transaction_id)
+            return Response(status=status.HTTP_200_OK)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -180,5 +183,5 @@ def apply_coupon( request):
             discount = 50
         except MarketingMember.DoesNotExist:
             return Response({"detail": "invalid coupon"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-    logger.info(f"total amount is {discount}")
+    logger.info(f"total discount is {discount}")
     return Response({"discount": discount}, status=status.HTTP_200_OK)
