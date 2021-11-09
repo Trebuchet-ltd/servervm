@@ -7,12 +7,18 @@ from . import models
 
 @admin.register(models.VirtualMachine)
 class VmAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "code", "name", 'active', "memory", "storage", 'vcpus',
-                    "vpn_ip", 'plan', )
+    list_display = ("id", "user", "name", 'msv', 'active', 'vpn_ip',
+                    'plan')
+
+    readonly_fields = ["vpn_ip", "code", 'active', 'ip_address', 'mac_address', 'virtual_mac']
 
     list_filter = ('active', "plan",)
     actions = ['start', 'stop', 'restart']
     search_fields = ['code', 'name']
+
+
+    def msv(self, request):
+        return f"{request.memory},{request.storage},{request.vcpus}"
 
     def start(self, request, queryset):
         for i in queryset:

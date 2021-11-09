@@ -17,8 +17,8 @@ class VmPlan(models.Model):
     student_discount = models.FloatField(help_text='discount',  default=0)
 
     def __str__(self):
-        return f"{self.os} / {self.memory} gb ram / {self.vcpus} vcpu / " \
-               f"{self.storage} gb storage / {self.amount} per month "
+        return self.name
+
 
 
 class MarketingMember(models.Model):

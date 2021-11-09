@@ -5,12 +5,13 @@ from . import models
 
 @admin.register(models.VmPlan)
 class System(admin.ModelAdmin):
-    pass
+    list_display = ('name', 'vcpus', 'memory', 'storage')
+    ordering = ['vcpus']
 
 
 @admin.register(models.MarketingMember)
 class MarketingMembers(admin.ModelAdmin):
-    pass
+    list_display = ('user', 'coupon', 'credits', 'total_active_clients')
 
 
 @admin.register(models.Transaction)
