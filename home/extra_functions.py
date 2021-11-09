@@ -315,6 +315,7 @@ def handle_payment(transaction_id):
 
     if vm_request.amount_only:
         mark_logger.info("only added credits")
+        return -1
     elif not vm_request.vm:
         vm_plan = vm_request.plan
         member = None
@@ -337,10 +338,12 @@ def handle_payment(transaction_id):
         )
         vm_request.vm = vm
         vm_request.save()
+        return vm.id
     elif vm_request.vm and vm_request.plan == vm_request.vm.plan:
         vm = vm_request.vm
         vm.expiry_date += timedelta(days=vm_request.month * 30)
         vm.save()
+        return vm.id
     elif vm_request.plan != vm_request.vm.plan:
         current_vm = vm_request.vm
         vm_plan = vm_request.plan
@@ -350,3 +353,4 @@ def handle_payment(transaction_id):
         current_vm.storage = vm_plan.storage
         current_vm.save()
         threading.Thread(target=update_vm, args=(current_vm, vm_plan.memory, vm_plan.storage)).start()
+        return current_vm.id

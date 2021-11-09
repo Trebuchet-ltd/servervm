@@ -37,7 +37,7 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 ALLOWED_HOSTS = ['*']
@@ -74,7 +74,6 @@ INSTALLED_APPS = [
     'admin_honeypot',
     'log_viewer',
     'django_celery_beat',
-    'channels',
     'home',
     'auth_login',
     'marketing',

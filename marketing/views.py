@@ -117,8 +117,10 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
             obj.save()
         get_payment_link(self.request.user, obj)
         if request.user.is_staff:
-            handle_payment(obj.transaction_id)
-            return Response(status=status.HTTP_200_OK)
+            vm_id = handle_payment(obj.transaction_id)
+            if vm_id != -1:
+                return Response({"payment_link": f"{settings.webhook_redirect_url}/{vm_id}"},status=status.HTTP_200_OK)
+            return Response({"payment_link": f"{settings.webhook_redirect_url}/"},status=status.HTTP_200_OK)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -151,26 +153,6 @@ def payment(request):
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
     return HttpResponseRedirect(settings.webhook_redirect_url)
 
-
-# def mail():
-#     try:
-#         logger.info("sending mail")
-#         subject, from_email, to = 'hello', 'sunithvs2002@gmail.com', 'sunithvazhenkada@gmail.com'
-#         text_content = 'This is an important message.'
-#         html_content = '<p>This is an <strong>important</strong> message.</p>'
-#         msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
-#         msg.attach_alternative(html_content, "text/html")
-#         msg.send()
-#         logger.info("mail sending completed ")
-#     except Exception as e:
-#         logger.warning(e)
-
-#
-# @api_view(["GET"])
-# def sendmail(request):
-#     models.CeleryGroupResult
-#
-#     return Response()
 
 @api_view(["POST"])
 def apply_coupon( request):

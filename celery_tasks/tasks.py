@@ -40,10 +40,9 @@ def server_monitoring():
 
 @app.task
 def monitor_vm():
-    vms = VirtualMachine.objects.all()
+    vms = VirtualMachine.objects.filter(maintenance=False)
     conn = libvirt.open("qemu:///system")
     for vm in vms:
-
         try:
             dom = conn.lookupByName(vm.code)
             logger.info(f"vm {vm.code}/{vm.name} 's active status in database {vm.active} actually {dom.isActive()}")
