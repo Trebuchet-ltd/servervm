@@ -7,6 +7,7 @@ import random
 from django.core.validators import MaxValueValidator, MinValueValidator
 import os
 from marketing.models import VmPlan
+from django.contrib.postgres.fields import ArrayField
 
 available_os = (('ubuntu_20.04', "ubuntu_20.04",), ("centos_8", "centos_8"))
 
@@ -162,3 +163,9 @@ class Tokens(models.Model):
         return f"{self.user} "
 
 
+class Domains(models.Model):
+    name = models.CharField(max_length=100)
+    ports = ArrayField(models.IntegerField(blank=True, null=True, default=8000, ),
+                                         blank=True, null=True, default=list)
+    active_ports = ArrayField(models.IntegerField(blank=True, null=True, default=8000, ),
+                                         blank=True, null=True, default=list, max_length=5)
