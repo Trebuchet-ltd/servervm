@@ -52,7 +52,7 @@ class VmViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.maintenance = True
-        instance.save()
+        instance.delete()
 
     def update(self, request, *args, **kwargs):
         if request.user.is_staff:
