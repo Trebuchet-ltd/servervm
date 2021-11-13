@@ -39,7 +39,7 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 ALLOWED_HOSTS = ['*']
@@ -76,7 +76,7 @@ INSTALLED_APPS = [
     'django_filters',
     'admin_honeypot',
     'log_viewer',
-
+    'request_viewer',
     'django_celery_beat',
     'home',
     'auth_login',
@@ -95,7 +95,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'request_viewer.middleware.RequestViewerMiddleware',
+    'request_viewer.middleware.RequestViewerMiddleware',
 
 ]
 
@@ -523,4 +523,8 @@ JAZZMIN_SETTINGS = {
 
 JAZZMIN_UI_TWEAKS = {
     "theme": "solar",
+}
+REQUEST_VIEWER = {
+  "LIVE_MONITORING": True,
+  "WHITELISTED_PATH": [ADMIN_URL, 'auth/', 'login/', ]
 }
