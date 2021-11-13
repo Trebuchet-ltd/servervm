@@ -76,7 +76,7 @@ INSTALLED_APPS = [
     'django_filters',
     'admin_honeypot',
     'log_viewer',
-    'request_viewer',
+
     'django_celery_beat',
     'home',
     'auth_login',
@@ -95,7 +95,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'request_viewer.middleware.RequestViewerMiddleware',
+    # 'request_viewer.middleware.RequestViewerMiddleware',
 
 ]
 
