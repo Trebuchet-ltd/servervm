@@ -51,6 +51,7 @@ class Transaction(models.Model):
     payment_link = models.CharField(max_length=40, default='')
     amount_only = models.BooleanField(default=0)
     invited_by = models.ForeignKey(MarketingMember, on_delete=models.SET_NULL, blank=True, null=True)
+    vm_created = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user} "

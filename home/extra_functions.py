@@ -1,23 +1,23 @@
-import random
-import threading
-
-import libvirt
-import re
-import os
-import time
+import hashlib
+import hmac
 import logging
 import math
+import os
+import random
+import re
+import string
+import threading
+import time
+from datetime import timedelta, date
+
+import libvirt
 import requests
 from requests.auth import HTTPBasicAuth
-import servervm.settings as settings
-import hmac
-import hashlib
-import string
-from .models import VirtualMachine
-from marketing.models import Transaction
-from datetime import timedelta, date
-from marketing.models import MarketingMember
 
+import servervm.settings as settings
+from marketing.models import MarketingMember
+from marketing.models import Transaction
+from .models import VirtualMachine
 
 logger = logging.getLogger("home")
 
@@ -304,53 +304,56 @@ def get_payment_link(user, vm_request, amount=0):
 
 def handle_payment(transaction_id):
     vm_request = Transaction.objects.get(transaction_id=transaction_id)
-
-    user = vm_request.user
-    mark_logger.info(f"handling payment of user {user.username}")
-    token = user.tokens
-    token.credits += vm_request.amount
-    mark_logger.info(f"added {vm_request.amount} credits to user")
-    token.save()
-    mark_logger.info(f"current credit is {token.credits}")
-
-    if vm_request.amount_only:
-        mark_logger.info("only added credits")
-        return -1
-    elif not vm_request.vm:
-        vm_plan = vm_request.plan
-        member = None
-        if vm_request.coupon:
-            try:
-                member = MarketingMember.objects.get(coupon__iexact=vm_request.coupon)
-            except MarketingMember.DoesNotExist:
-                pass
-        vm = VirtualMachine.objects.create(
-            user=vm_request.user,
-            name=vm_request.name,
-            memory=vm_plan.memory,
-            vcpus=vm_plan.vcpus,
-            storage=vm_plan.storage,
-            os=vm_plan.os,
-            pem_file=vm_request.pem_file,
-            plan=vm_plan,
-            expiry_date=date.today() + timedelta(days=vm_request.month * 30),
-            invited_by=member
-        )
-        vm_request.vm = vm
+    if not vm_request.vm_created:
+        vm_request.vm_created = True
         vm_request.save()
-        return vm.id
-    elif vm_request.vm and vm_request.plan == vm_request.vm.plan:
-        vm = vm_request.vm
-        vm.expiry_date += timedelta(days=vm_request.month * 30)
-        vm.save()
-        return vm.id
-    elif vm_request.plan != vm_request.vm.plan:
-        current_vm = vm_request.vm
-        vm_plan = vm_request.plan
-        current_vm.maintenance = True
-        current_vm.memory = vm_plan.memory
-        current_vm.vcpus = vm_plan.vcpus
-        current_vm.storage = vm_plan.storage
-        current_vm.save()
-        threading.Thread(target=update_vm, args=(current_vm, vm_plan.memory, vm_plan.storage)).start()
-        return current_vm.id
+        user = vm_request.user
+        mark_logger.info(f"handling payment of user {user.username}")
+        token = user.tokens
+        token.credits += vm_request.amount
+        mark_logger.info(f"added {vm_request.amount} credits to user")
+        token.save()
+        mark_logger.info(f"current credit is {token.credits}")
+
+        if vm_request.amount_only:
+            mark_logger.info("only added credits")
+            return -1
+        elif not vm_request.vm:
+            vm_plan = vm_request.plan
+            member = None
+            if vm_request.coupon:
+                try:
+                    member = MarketingMember.objects.get(coupon__iexact=vm_request.coupon)
+                except MarketingMember.DoesNotExist:
+                    pass
+            vm = VirtualMachine.objects.create(
+                user=vm_request.user,
+                name=vm_request.name,
+                memory=vm_plan.memory,
+                vcpus=vm_plan.vcpus,
+                storage=vm_plan.storage,
+                os=vm_plan.os,
+                pem_file=vm_request.pem_file,
+                plan=vm_plan,
+                expiry_date=date.today() + timedelta(days=vm_request.month * 30),
+                invited_by=member
+            )
+            vm_request.vm = vm
+            vm_request.save()
+            return vm.id
+        elif vm_request.vm and vm_request.plan == vm_request.vm.plan:
+            vm = vm_request.vm
+            vm.expiry_date += timedelta(days=vm_request.month * 30)
+            vm.save()
+            return vm.id
+        elif vm_request.plan != vm_request.vm.plan:
+            current_vm = vm_request.vm
+            vm_plan = vm_request.plan
+            current_vm.maintenance = True
+            current_vm.memory = vm_plan.memory
+            current_vm.vcpus = vm_plan.vcpus
+            current_vm.storage = vm_plan.storage
+            current_vm.save()
+            threading.Thread(target=update_vm, args=(current_vm, vm_plan.memory, vm_plan.storage)).start()
+            return current_vm.id
+    return 0

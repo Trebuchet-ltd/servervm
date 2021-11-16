@@ -1,6 +1,6 @@
-
-from pathlib import Path
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path='.env')
@@ -27,7 +27,6 @@ vm_template_password = os.environ.get("template1_password")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-4n0zl^guhzn*v1r244zbfozti40bsj64km+cg56e@xyb!)lms3'
 
-
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
@@ -40,7 +39,6 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 
 ALLOWED_HOSTS = ['*']
 
@@ -81,7 +79,6 @@ INSTALLED_APPS = [
     'home',
     'auth_login',
     'marketing',
-
 
 ]
 
@@ -138,7 +135,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -156,7 +152,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -192,7 +187,7 @@ MEDIA_URL = '/media/'
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = (
-       'http://localhost:3000',
+    'http://localhost:3000',
 )
 LOGIN_URL = '/login/'
 
@@ -200,7 +195,6 @@ LOGIN_URL = '/login/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 OAUTH2_PROVIDER = {
     "OIDC_ENABLED": True,
@@ -212,7 +206,6 @@ OAUTH2_PROVIDER = {
                'groups': 'Invite friends'},
     'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'
 }
-
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
@@ -246,7 +239,6 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
 
-
 AUTHENTICATION_BACKENDS = (
     # Google OAuth2
     'social_core.backends.google.GoogleOAuth2',
@@ -267,8 +259,6 @@ DEFAULT_CLIENT = os.environ.get('DEFAULT_CLIENT')
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_SECRET')
 
-
-
 SWAGGER_SETTINGS = {
     'JSON_EDITOR': True,
     'SECURITY_DEFINITIONS': {
@@ -280,8 +270,7 @@ SWAGGER_SETTINGS = {
     }
 }
 
-
-LOG_VIEWER_FILES = ['v2.log', 'home.log', 'default.log','tasks.log', 'marketing']
+LOG_VIEWER_FILES = ['v2.log', 'home.log', 'default.log', 'tasks.log', 'marketing']
 LOG_VIEWER_FILES_PATTERN = '*'
 LOG_VIEWER_FILES_DIR = os.path.join(BASE_DIR, 'logs')
 LOG_VIEWER_MAX_READ_LINES = 1000  # total log lines will be read
@@ -386,7 +375,6 @@ LOGGING = {
 cusat_discount = 50
 marketing_discount = 30
 
-
 JAZZMIN_SETTINGS = {
     # title of the window (Will default to current_admin_site.site_title if absent or None)
     "site_title": application_name,
@@ -426,7 +414,7 @@ JAZZMIN_SETTINGS = {
     "topmenu_links": [
 
         # Url that gets reversed (Permissions can be added)
-        {"name": "Dashboard",  "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "Dashboard", "url": "admin:index", "permissions": ["auth.view_user"]},
 
         # external url that opens in a new window (Permissions can be added)
         # model admin to link to (Permissions checked against model)
@@ -444,9 +432,9 @@ JAZZMIN_SETTINGS = {
     # # Additional links to include in the user menu on the top right ("app" url type is not allowed)
     "usermenu_links": [
         {"name": "logs", "url": f"/{ADMIN_URL}log_viewer/",
-         "icon": "fas fa-comments",},
+         "icon": "fas fa-comments", },
         {"name": "requests", "url": f"/{ADMIN_URL}request-viewer/",
-         "icon": "fas fa-comments",},
+         "icon": "fas fa-comments", },
         {"model": "auth.user"}
     ],
 
@@ -525,6 +513,6 @@ JAZZMIN_UI_TWEAKS = {
     "theme": "solar",
 }
 REQUEST_VIEWER = {
-  "LIVE_MONITORING": True,
-  "WHITELISTED_PATH": [ADMIN_URL, 'auth/', 'login/', ]
+    "LIVE_MONITORING": True,
+    "WHITELISTED_PATH": [ADMIN_URL, 'auth/', 'login/', ]
 }

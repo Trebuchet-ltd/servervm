@@ -1,20 +1,17 @@
 import logging
-import threading
 
-from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives
-
-from .serializers import GetVmPlanSerializer, TransactionSerializer, MarketingMemberSerializer
-from .models import VmPlan, Transaction, MarketingMember
-from rest_framework import viewsets, permissions
-from rest_framework.response import Response
-from home.extra_functions import handle_payment, verify_signature, get_payment_link, calculate_amount
-from rest_framework.views import APIView
-import servervm.settings as settings
-from rest_framework import status
-from authentication.permissions import IsOwner
-from rest_framework.decorators import api_view
 from django.http import HttpResponseRedirect
+from rest_framework import status
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+import servervm.settings as settings
+from authentication.permissions import IsOwner
+from home.extra_functions import handle_payment, verify_signature, get_payment_link
 from home.models import VirtualMachine, PemFile
+from .models import VmPlan, Transaction, MarketingMember
+from .serializers import GetVmPlanSerializer, TransactionSerializer, MarketingMemberSerializer
 
 logger = logging.getLogger("marketing")
 
@@ -119,8 +116,8 @@ class TransactionAPiViewSet(viewsets.ModelViewSet):
         if request.user.is_staff:
             vm_id = handle_payment(obj.transaction_id)
             if vm_id != -1:
-                return Response({"payment_link": f"{settings.webhook_redirect_url}/{vm_id}"},status=status.HTTP_200_OK)
-            return Response({"payment_link": f"{settings.webhook_redirect_url}/"},status=status.HTTP_200_OK)
+                return Response({"payment_link": f"{settings.webhook_redirect_url}/{vm_id}"}, status=status.HTTP_200_OK)
+            return Response({"payment_link": f"{settings.webhook_redirect_url}/"}, status=status.HTTP_200_OK)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -155,7 +152,7 @@ def payment(request):
 
 
 @api_view(["POST"])
-def apply_coupon( request):
+def apply_coupon(request):
     coupon = request.data.get("coupon")
     discount = 0
     if coupon:
