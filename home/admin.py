@@ -1,4 +1,5 @@
-from django.contrib import admin, messages
+from django.contrib import admin
+
 from . import models
 
 
@@ -14,18 +15,22 @@ class VmAdmin(admin.ModelAdmin):
     search_fields = ['code', 'name']
     autocomplete_fields = ['user']
 
-    def msv(self, request):
+    @staticmethod
+    def msv(request):
         return f"{request.memory},{request.storage},{request.vcpus}"
 
-    def start(self, request, queryset):
+    @staticmethod
+    def start(self, _, queryset):
         for i in queryset:
             i.start()
 
-    def stop(self, request, queryset):
+    @staticmethod
+    def stop(self, _, queryset):
         for i in queryset:
-            i.shutdown()
+            i.stop()
 
-    def restart(modeladmin, request, queryset):
+    @staticmethod
+    def restart(self, _, queryset):
         for i in queryset:
             i.restart()
 
@@ -38,4 +43,3 @@ class PemAdmin(admin.ModelAdmin):
 @admin.register(models.SystemDetails)
 class System(admin.ModelAdmin):
     pass
-

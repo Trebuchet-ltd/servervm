@@ -38,7 +38,7 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -88,7 +88,7 @@ MIDDLEWARE = [
     'oauth2_provider.middleware.OAuth2TokenMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -401,7 +401,7 @@ JAZZMIN_SETTINGS = {
     # "copyright": f"all rights reserved to {application_name}",
 
     # The model admin to search from the search bar, search bar omitted if excluded
-    "search_model": "auth.User",
+    "search_model": "home.VirtualMachine",
 
     # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
     "user_avatar": None,
@@ -449,7 +449,7 @@ JAZZMIN_SETTINGS = {
     "navigation_expanded": True,
 
     # Hide these apps when generating side menu e.g (auth)
-    "hide_apps": [],
+    "hide_apps": ['django_celery_results', ],
 
     # Hide these models when generating side menu (e.g auth.user)
     "hide_models": [],
@@ -514,5 +514,5 @@ JAZZMIN_UI_TWEAKS = {
 }
 REQUEST_VIEWER = {
     "LIVE_MONITORING": True,
-    "WHITELISTED_PATH": [ADMIN_URL, 'auth/', 'login/', ]
+    "WHITELISTED_PATH": [ADMIN_URL, 'auth/', 'login/','google-login/' ]
 }
