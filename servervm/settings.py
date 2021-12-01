@@ -227,6 +227,8 @@ REST_FRAMEWORK = {
         'user_min': '30/minute',
         'user_hour': '200/hour',
         'user_day': '2000/day',
+        'vm_day': '1/day',
+        'pem_day': '2/day',
     },
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',

@@ -1,5 +1,4 @@
 import logging
-
 from django.http import HttpResponseRedirect
 from rest_framework import status
 from rest_framework import viewsets, permissions
