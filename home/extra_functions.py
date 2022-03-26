@@ -131,13 +131,15 @@ def delete_vm(instance):
         print(e)
 
 
-def update_vm(instance, memory, storage):
+def update_vm(instance, memory=0, storage=0):
     print("updating vm")
+    instance.maintenance=True
+    instance.save()
     try:
         conn = libvirt.open("qemu:///system")
         dom = conn.lookupByName(instance.code)
         if dom.isActive():
-            dom.shutdown()
+            dom.destroy()
             time.sleep(20)
 
         if storage < instance.storage:
