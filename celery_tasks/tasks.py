@@ -1,4 +1,3 @@
-
 from servervm.celery import *
 from home.models import SystemDetails
 import psutil
@@ -23,17 +22,17 @@ def server_monitoring():
     net_io = psutil.net_io_counters(pernic=False, nowrap=True)
 
     SystemDetails.objects.create(
-            cpu_usage=cpu,
-            ram_usage=ram,
-            err_out=net_io.errout,
-            err_in=net_io.errin,
-            packets_sent=net_io.packets_sent,
-            packets_recv=net_io.packets_recv,
-            bytes_sent=net_io.bytes_sent,
-            bytes_recv=net_io.bytes_recv,
-            dropin=net_io.dropin,
-            dropout=net_io.dropout,
-            )
+        cpu_usage=cpu,
+        ram_usage=ram,
+        err_out=net_io.errout,
+        err_in=net_io.errin,
+        packets_sent=net_io.packets_sent,
+        packets_recv=net_io.packets_recv,
+        bytes_sent=net_io.bytes_sent,
+        bytes_recv=net_io.bytes_recv,
+        dropin=net_io.dropin,
+        dropout=net_io.dropout,
+    )
 
     logger.info("checking completed")
 
@@ -61,12 +60,7 @@ def monitor_vm():
 #     conn = libvirt.open("qemu:///system")
 #     for vm in vms:
 #         try:
-#             dom = conn.lookupByName(vm.code)
-#             logger.info(f"vm {vm.code}/{vm.name} 's active status in database {vm.active} actually {dom.isActive()}")
-#             if vm.active and not dom.isActive():
-#                 logger.info(f"vm {vm.code}/{vm.name} is not on but it is active according to database ")
-#                 logger.info(f"vm {vm.code}/{vm.name} is starting  ")
-#                 os.system(f"virsh start {vm.code}")
-#                 logger.info(f"vm {vm.code}/{vm.name} is started  ")
+#             instance = conn.lookupByName(vm.code)
+#
 #         except Exception as e:
 #             logger.warning(e)
