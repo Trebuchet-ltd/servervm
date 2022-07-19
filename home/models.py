@@ -26,7 +26,7 @@ class PemFile(models.Model):
     name = models.CharField(max_length=25)
     code = models.CharField(max_length=15, default=create_new_pem_name, blank=True, null=True)
     user = models.ForeignKey(User, related_name="pemfile", on_delete=models.CASCADE)
-    file_path = models.TextField(blank=True,null=True)
+    file_path = models.TextField(blank=True, null=True)
     created_date = models.DateField(auto_now_add=True)
     downloaded = models.BooleanField(default=0)
 
@@ -56,7 +56,7 @@ class VirtualMachine(models.Model):
     memory = models.PositiveIntegerField(default=4, help_text="in GB")
     vcpus = models.PositiveIntegerField(default=2)
     storage = models.PositiveIntegerField(default=20, help_text="in GB",
-                                          validators=[MinValueValidator(5),])
+                                          validators=[MinValueValidator(5), ])
     mac_address = models.CharField(max_length=50, blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     os = models.CharField(max_length=20, choices=available_os)
@@ -68,6 +68,7 @@ class VirtualMachine(models.Model):
     expiry_date = models.DateField(blank=True, null=True)
     invited_by = models.ForeignKey("marketing.MarketingMember", on_delete=models.SET_NULL, blank=True, null=True)
     staff_status = models.BooleanField(default=False)
+    public_ip = models.ForeignKey("PublicIp", related_name="vm", on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -166,6 +167,16 @@ class Tokens(models.Model):
 class Domains(models.Model):
     name = models.CharField(max_length=100)
     ports = ArrayField(models.IntegerField(blank=True, null=True, default=8000, ),
-                                         blank=True, null=True, default=list)
+                       blank=True, null=True, default=list)
     active_ports = ArrayField(models.IntegerField(blank=True, null=True, default=8000, ),
-                                         blank=True, null=True, default=list, max_length=5)
+                              blank=True, null=True, default=list, max_length=5)
+
+
+class PublicIp(models.Model):
+    ip = models.GenericIPAddressField()
+    subnet = models.GenericIPAddressField()
+    gateway = models.GenericIPAddressField()
+    dns = ArrayField(models.GenericIPAddressField(), blank=True, null=True)
+
+    def __str__(self):
+        return str(self.ip)

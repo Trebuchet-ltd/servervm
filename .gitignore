@@ -1,12 +1,12 @@
 /venv
 
-./idea/
+./idea
 .env
 
 
 ./home/server_setup
 /home/template_changes.txt
-
+**/migrations/0*
 ./logs/*
 ./media
 ./err.html

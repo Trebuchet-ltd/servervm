@@ -6,12 +6,12 @@ import threading
 
 @admin.register(models.VirtualMachine)
 class VmAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "name", 'msv', 'active', 'vpn_ip',
+    list_display = ("id", "code", "user", "name", 'msv', 'active', 'vpn_ip',
                     'plan')
 
     readonly_fields = ["vpn_ip", "code", 'active', 'ip_address', 'mac_address', 'virtual_mac']
     list_display_links = ['id', 'plan']
-    list_filter = ('active', "plan",)
+    list_filter = ('active', "plan", "staff_status")
     actions = ['start', 'stop', 'restart', 'update', 'update_without_storage']
     search_fields = ['code', 'name']
     autocomplete_fields = ['user']
@@ -54,3 +54,8 @@ class PemAdmin(admin.ModelAdmin):
 @admin.register(models.SystemDetails)
 class System(admin.ModelAdmin):
     pass
+
+
+@admin.register(models.PublicIp)
+class PublicIp(admin.ModelAdmin):
+    list_display = ["ip"]
