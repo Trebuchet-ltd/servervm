@@ -1,29 +1,26 @@
-
 import django_filters
 from django.http import FileResponse
-from rest_framework.decorators import action
-
-from .serializers import VirtualMachineSerializer, PemFileSerializer
-from .models import PemFile
-from rest_framework import viewsets, filters, permissions
-from rest_framework.response import Response
-from .extra_functions import *
-import threading
-from marketing.models import VmPlan
-import time
-import servervm.settings as settings
 from rest_framework import status
+from rest_framework import viewsets, filters, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
 from authentication.permissions import IsOwner
+from marketing.models import VmPlan
+from .extra_functions import *
+from .models import PemFile
+from .serializers import VirtualMachineSerializer, PemFileSerializer
 
 
 class VmViewSet(viewsets.ModelViewSet):
     serializer_class = VirtualMachineSerializer
     queryset = VirtualMachine.objects.all()
-    http_method_names = ['get', 'delete', 'post']
+    http_method_names = ['get', 'delete', 'post', ]
     filterset_fields = ['active', ]
     filter_backends = [filters.SearchFilter, django_filters.rest_framework.DjangoFilterBackend]
     search_fields = ['code', 'name']
-    permission_classes = [IsOwner]
+
+    # permission_classes = [IsOwner]
 
     def get_queryset(self):
         try:
@@ -47,8 +44,8 @@ class VmViewSet(viewsets.ModelViewSet):
                 storage=vm_plan.storage,
                 os=vm_plan.os
             )
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
-        return Response({"detail":"you are not allowed to create vm through this end point"})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({"detail": "you are not allowed to create vm through this end point"})
 
     def perform_destroy(self, instance):
         instance.maintenance = True
@@ -76,7 +73,16 @@ class VmViewSet(viewsets.ModelViewSet):
             current_data = VirtualMachine.objects.get(id=self.request.data["id"])
             threading.Thread(target=update_vm, args=(current_data, memory, storage)).start()
             return res
-        return Response({"detail" : "you are not allowed to update vm through this end point"})
+        return Response({"detail": "you are not allowed to update vm through this end point"})
+
+    @action(methods=['post'], detail=True, permission_classes=[permissions.IsAdminUser])
+    def increase(self, request, pk):
+        vm = VirtualMachine.objects.get(pk=pk)
+        try:
+            new_storage = self.request.data["storage"]
+        except KeyError:
+            pass
+        memory = self.request.data["memory"]
 
     @action(methods=['post'], detail=True, permission_classes=[IsOwner])
     def start(self, request, pk):
@@ -100,7 +106,7 @@ class VmViewSet(viewsets.ModelViewSet):
         else:
             return Response("vm is at some maintenance please wait ...", status=status.HTTP_406_NOT_ACCEPTABLE)
 
-    @action(methods=['post'], detail=True,permission_classes=[IsOwner])
+    @action(methods=['post'], detail=True, permission_classes=[IsOwner])
     def stop(self, request, pk):
         vm = VirtualMachine.objects.get(pk=pk)
         if not vm.maintenance:
@@ -166,7 +172,7 @@ class VmViewSet(viewsets.ModelViewSet):
         else:
             return Response(status=status.HTTP_202_ACCEPTED)
 
-    @action(methods=['post'], detail=False,permission_classes=[permissions.AllowAny])
+    @action(methods=['post'], detail=False, permission_classes=[permissions.AllowAny])
     def set_vpn_ip(self, request):
         mac_address = request.POST["mac_address"]
         try:
@@ -190,7 +196,7 @@ class PemFileViewSet(viewsets.ModelViewSet):
     serializer_class = PemFileSerializer
     queryset = PemFile.objects.all()
     http_method_names = ["get", "post", "delete"]
-    permission_classes = [IsOwner,permissions.IsAuthenticated]
+    permission_classes = [IsOwner, permissions.IsAuthenticated]
 
     def get_queryset(self):
         return PemFile.objects.filter(user=self.request.user.id)
@@ -214,6 +220,3 @@ class PemFileViewSet(viewsets.ModelViewSet):
             pem_file.save()
             return response
         return Response({"error": "you have already downloaded this file"})
-
-
-

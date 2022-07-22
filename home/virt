@@ -1,33 +1,38 @@
 virt-install \
 --name ubuntu1604 \
 --ram 4096 \
+--disk path=/var/kvm/images/ubuntu1604.img,size=12 \
+--vcpus 2 \
+--os-variant ubuntu16.04 \
+--network bridge=br0 \
+--graphics none \
+--console pty,target_type=serial \
+--cdrom /home/ubuntu/osimage/ubuntu1604.iso \
+--extra-args 'console=ttyS0,115200n8 serial'
+
+virt-install \
+--name test \
+--ram 4096 \
+--disk path=/var/kvm/images/test.img,size=12 \
+--vcpus 2 \
+--os-variant ubuntu16.04 \
+--network bridge=br0 \
+--graphics none \
+--console pty,target_type=serial \
+--location /home/ubuntu/osimage/ubuntu1604.iso,kernel=casper/vmlinuz,initrd=casper/initrd \
+--extra-args 'console=ttyS0,115200n8 serial \
+
+guestmount
+
+ sudo virt-install \
+--name ubuntu1604 \
+--ram 4096 \
 --disk path=/var/kvm/images/ubuntu1604.img,size=30 \
 --vcpus 2 \
 --os-type linux \
---os-variant ubuntu16.04   --network bridge=br0 \
+--os-variant ubuntu16.04 \
+--network bridge=br0 \
 --graphics none \
 --console pty,target_type=serial \
---location '~/osimage/ubuntu-16.04.7-server-amd64.iso'
-
-
-sudo virt-install \
---name test \
---os-variant ubuntu20.04 \
---vcpus 2 \
---ram 2048 \
---os-type linux \
---disk path=/var/kvm/images/test.qcow2,size=15 \
---location osimage/ubuntu2004.iso \
---network bridge=br0 \
---debug
-
-sudo virt-install   \
---name ubuntutest   \
---ram 4096   \
---disk path=/var/kvm/images/ubuntutest.qcow2,size=12,format=qcow2   \
---vcpus 2   \
---os-type linux   \
---os-variant ubuntu20.04   \
---network bridge=br0   \
---graphics none      \
---location osimage/ubuntu2004.iso
+--location /home/ubuntu/osimage/ubuntu1604.iso \
+--extra-args 'console=ttyS0,115200n8 serial'
