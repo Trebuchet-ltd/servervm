@@ -18,6 +18,9 @@ class VmPlan(models.Model):
     def __str__(self):
         return self.name
 
+    def total(self):
+        return self.amount - self.coupon_discount - self.student_discount
+
 
 class MarketingMember(models.Model):
     user = models.OneToOneField(User, on_delete=models.PROTECT, related_name='marketing')
