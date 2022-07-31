@@ -38,7 +38,7 @@ SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -451,7 +451,25 @@ JAZZMIN_SETTINGS = {
     "navigation_expanded": True,
 
     # Hide these apps when generating side menu e.g (auth)
-    "hide_apps": ['django_celery_results', ],
+    "hide_apps": ['jazzmin',
+                  'corsheaders',
+                  'django_celery_results',
+                  'django.contrib.admin',
+                  'django.contrib.auth',
+                  'django.contrib.contenttypes',
+                  'django.contrib.sessions',
+                  'django.contrib.messages',
+                  'django.contrib.staticfiles',
+                  'rest_framework',
+                  'oauth2_provider',
+                  'social_django',
+                  'oidc_provider',
+                  'rest_framework_social_oauth2',
+                  'drf_yasg',
+                  'django_filters',
+                  'admin_honeypot',
+                  'log_viewer',
+                  'request_viewer', ],
 
     # Hide these models when generating side menu (e.g auth.user)
     "hide_models": [],
@@ -516,5 +534,5 @@ JAZZMIN_UI_TWEAKS = {
 }
 REQUEST_VIEWER = {
     "LIVE_MONITORING": True,
-    "WHITELISTED_PATH": [ADMIN_URL, 'auth/', 'login/','google-login/' ]
+    "WHITELISTED_PATH": [ADMIN_URL, 'auth/', 'login/', 'google-login/']
 }

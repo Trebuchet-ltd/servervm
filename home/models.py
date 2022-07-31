@@ -45,7 +45,7 @@ def create_new_code():
         unique_code = code_generator()
         if not VirtualMachine.objects.filter(code=unique_code):
             not_unique = False
-    return str(unique_code)
+    return "dev" + str(unique_code)
 
 
 class VirtualMachine(models.Model):
@@ -158,7 +158,7 @@ class Tokens(models.Model):
     credits = models.FloatField(default=0)
 
     def is_student(self):
-        return self.user.email.lower().endswith("@ug.cusat.ac.in")
+        return self.user.email.lower().endswith("cusat.ac.in")
 
     def __str__(self):
         return f"{self.user} "

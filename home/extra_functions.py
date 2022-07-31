@@ -133,7 +133,7 @@ def delete_vm(instance):
 
 def update_vm(instance, memory=0, storage=0):
     print("updating vm")
-    instance.maintenance=True
+    instance.maintenance = True
     instance.save()
     try:
         conn = libvirt.open("qemu:///system")
@@ -304,7 +304,7 @@ def get_payment_link(user, vm_request, amount=0):
         return False
 
 
-def handle_payment(transaction_id):
+def old_handle_payment(transaction_id):
     vm_request = Transaction.objects.get(transaction_id=transaction_id)
     if not vm_request.vm_created:
         vm_request.vm_created = True
@@ -359,3 +359,11 @@ def handle_payment(transaction_id):
             threading.Thread(target=update_vm, args=(current_vm, vm_plan.memory, vm_plan.storage)).start()
             return current_vm.id
     return 0
+
+
+def handle_payment(transaction_id):
+    vm_request = Transaction.objects.get(transaction_id=transaction_id)
+    if vm_request.amount_only:
+        vm_request.user.tokens.credits += vm_request.amount
+        vm_request.user.tokens.save()
+        mark_logger.info("only added credits")
